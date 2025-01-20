@@ -9,10 +9,9 @@ const dbConfig = {
   port: 3307,
 };
 
-// 建立資料庫連線函數
+// 建立資料庫連線
 function connectdb() {
   const connection = mysql.createConnection(dbConfig);
-
   connection.connect((err) => {
     if (err) {
       console.error("資料庫連線失敗：", err.message);
@@ -20,11 +19,10 @@ function connectdb() {
     }
     console.log("成功連線到資料庫！");
   });
-
   return connection;
 }
 
-// 更新資料的函數
+// 更新資料函數
 function updatedata(dataset, dbConnection, callback) {
   const sql = "UPDATE ?? SET CarNumber = ?, CarOwner = ? WHERE ID = ?";
   dbConnection.query(sql, dataset, (err, results) => {
@@ -37,35 +35,33 @@ function updatedata(dataset, dbConnection, callback) {
 }
 
 // 主程式
-(async function main() {
-  const dbConnection = connectdb();
+const dbConnection = connectdb();
 
-  // 測試更新資料
-  const dataset = ["Overview", "LGE-9955", "王曉明", 1]; // 表名、車牌號、車主名稱、ID
-  updatedata(dataset, dbConnection, (err, results) => {
+// 測試更新資料
+const dataset = ["Overview", "LGE-9955", "王曉明", 1]; // 表名、車牌號、車主名稱、ID
+updatedata(dataset, dbConnection, (err, results) => {
+  if (err) {
+    console.error("更新資料失敗：", err.message);
+    dbConnection.end();
+    return;
+  }
+  console.log("更新成功：", results);
+
+  // 查詢資料
+  dbConnection.query("SELECT * FROM Overview", (err, results, fields) => {
     if (err) {
-      console.error("更新資料失敗：", err.message);
-      dbConnection.end();
-      return;
+      console.error("查詢資料失敗：", err.message);
+    } else {
+      console.log("查詢結果：", results);
     }
-    console.log("更新成功：", results);
 
-    // 查詢資料
-    dbConnection.query("SELECT * FROM Overview", (err, results, fields) => {
+    // 關閉連線
+    dbConnection.end((err) => {
       if (err) {
-        console.error("查詢資料失敗：", err.message);
-      } else {
-        console.log("查詢結果：", results);
+        console.error("關閉連線失敗：", err.message);
+        return;
       }
-
-      // 關閉連線
-      dbConnection.end((err) => {
-        if (err) {
-          console.error("關閉連線失敗：", err.message);
-          return;
-        }
-        console.log("成功關閉資料庫連線。");
-      });
+      console.log("成功關閉資料庫連線。");
     });
   });
-})();
+});

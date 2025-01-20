@@ -3,10 +3,10 @@ const mysql = require('mysql');
 
 // 資料庫連線設定
 const dbConfig = {
-    host: 'localhost',       // 資料庫主機的 IP 或主機名稱
-    user: 'root',            // 資料庫帳號
-    password: 'a1034bc',     // 資料庫密碼
-    database: 'world'        // 資料庫名稱
+    host: 'ewk5w.h.filess.io',       // 資料庫主機的 IP 或主機名稱
+    user: 'noisecar_viewjobup',            // 資料庫帳號
+    password: '6aa2d7447c0cdbaa95ecddb873841d21af9ee310',     // 資料庫密碼
+    database: 'noisecar_viewjobup'        // 資料庫名稱
 };
 
 // 定義連線資料庫的函數

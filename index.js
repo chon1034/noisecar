@@ -24,7 +24,7 @@ function connectdb() {
 
 // 更新資料函數
 function updatedata(dataset, dbConnection, callback) {
-  const sql = "UPDATE ?? SET CarNumber = ?, CarOwner = ? WHERE ID = ?";
+  const sql = "UPDATE ?? SET CarOwner = ? WHERE CarNumber = ?";
   dbConnection.query(sql, dataset, (err, results) => {
     if (err) {
       callback(err, null);
@@ -38,7 +38,7 @@ function updatedata(dataset, dbConnection, callback) {
 const dbConnection = connectdb();
 
 // 測試更新資料
-const dataset = ["Overview", "LGE-9955", "王曉明", 1]; // 表名、車牌號、車主名稱、ID
+const dataset = ["Overview", "王曉明", "LGE-9955"]; // 表名、車主名稱、車牌號
 updatedata(dataset, dbConnection, (err, results) => {
   if (err) {
     console.error("更新資料失敗：", err.message);

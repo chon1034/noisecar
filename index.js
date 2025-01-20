@@ -1,69 +1,71 @@
 const mysql = require("mysql");
 
-const hostname = "ewk5w.h.filess.io";
-const database = "noisecar_viewjobup";
-const port = "3307";
-const username = "noisecar_viewjobup";
-const password = "6aa2d7447c0cdbaa95ecddb873841d21af9ee310";
-
-const conn = {
-  host: hostname,
-  user: username,
-  password,
-  database,
-  port,
+// 資料庫設定
+const dbConfig = {
+  host: "ewk5w.h.filess.io",
+  user: "noisecar_viewjobup",
+  password: "6aa2d7447c0cdbaa95ecddb873841d21af9ee310",
+  database: "noisecar_viewjobup",
+  port: 3307,
 };
 
-// 定義連線資料庫的函數
+// 建立資料庫連線函數
 function connectdb() {
-    // 建立資料庫連線
-    const connection = mysql.createConnection(dbConfig);
+  const connection = mysql.createConnection(dbConfig);
 
-    // 嘗試連線並處理連線錯誤
-    connection.connect((err) => {
-        if (err) {
-            console.error('資料庫連線失敗：', err.message);
-            return;
-        }
-        console.log('成功連線到資料庫！');
-    });
+  connection.connect((err) => {
+    if (err) {
+      console.error("資料庫連線失敗：", err.message);
+      return;
+    }
+    console.log("成功連線到資料庫！");
+  });
 
-    return connection; // 回傳連線實例供後續操作
+  return connection;
 }
 
-// 呼叫函數進行測試
-const dbConnection = connectdb();
+// 更新資料的函數
+function updatedata(dataset, dbConnection, callback) {
+  const sql = "UPDATE ?? SET CarNumber = ?, CarOwner = ? WHERE ID = ?";
+  dbConnection.query(sql, dataset, (err, results) => {
+    if (err) {
+      callback(err, null);
+      return;
+    }
+    callback(null, results);
+  });
+}
 
+// 主程式
+(async function main() {
+  const dbConnection = connectdb();
 
-function updatedata(dataset, dbConnection){
-    dbConnection.query('UPDATE ?? SET CarNumber = ? CarOwner ID = ?', dataset, function(err, results){
-        if(err){
-            throw err;
+  // 測試更新資料
+  const dataset = ["Overview", "LGE-9955", "王曉明", 1]; // 表名、車牌號、車主名稱、ID
+  updatedata(dataset, dbConnection, (err, results) => {
+    if (err) {
+      console.error("更新資料失敗：", err.message);
+      dbConnection.end();
+      return;
+    }
+    console.log("更新成功：", results);
+
+    // 查詢資料
+    dbConnection.query("SELECT * FROM Overview", (err, results, fields) => {
+      if (err) {
+        console.error("查詢資料失敗：", err.message);
+      } else {
+        console.log("查詢結果：", results);
+      }
+
+      // 關閉連線
+      dbConnection.end((err) => {
+        if (err) {
+          console.error("關閉連線失敗：", err.message);
+          return;
         }
-        console.log(results);
+        console.log("成功關閉資料庫連線。");
+      });
     });
-    dbConnection.end();
-};
-
-d=['LGE-9955','王曉明']
-conn1=connectdb()
-updatedata.(d,conn1)
-
-// 測試查詢功能
-dbConnection.query('SELECT * FROM Overview ', (err, results, fields) => {
-    if (err) {
-        console.error('資料查詢失敗：', err.message);
-        return;
-    }
-    console.log('查詢結果：', results);
-});
-
-
-// 關閉連線
-dbConnection.end((err) => {
-    if (err) {
-        console.error('關閉連線失敗：', err.message);
-        return;
-    }
-    console.log('成功關閉資料庫連線。');
-});
+  });
+})();

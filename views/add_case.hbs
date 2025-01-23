@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增案件</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>新增案件</h1>
+
+    <form id="addCaseForm" class="form-layout">
+      <div class="form-group">
+        <label for="caseYear">案件年份</label>
+        <select id="caseYear" name="caseYear" required>
+          <option value="2023">2023</option>
+          <option value="2024" >2024</option>
+          <option value="2025">2025</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="caseMonth">案件月份</label>
+        <select id="caseMonth" name="caseMonth" required>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+          <option value="11">11</option>
+          <option value="12">12</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="issueDate">來文日期</label>
+        <input type="date" id="issueDate" name="issueDate" required>
+      </div>
+
+      <div class="form-group">
+        <label for="issueDept">來文者</label>
+        <input type="text" id="issueDept" name="issueDept" placeholder="請輸入來文者" required>
+      </div>
+
+      <div class="form-group">
+        <label for="issueNumber">來文文號</label>
+        <input type="text" id="issueNumber" name="issueNumber" placeholder="請輸入來文文號" required>
+      </div>
+
+      <div class="form-group">
+        <label for="vehicleNumbers">案件車號</label>
+        <textarea id="vehicleNumbers" name="vehicleNumbers" placeholder="每行輸入一個車號" required></textarea>
+      </div>
+
+      <button type="submit" class="btn-primary">上傳案件</button>
+    </form>
+  </div>
+
+  <script>
+    // 使用 AJAX 提交表單
+    $(document).ready(() => {
+      $("#addCaseForm").on("submit", (e) => {
+        e.preventDefault(); // 防止默認表單提交
+
+        const formData = {
+          caseYear: $("#caseYear").val(),
+          caseMonth: $("#caseMonth").val(),
+          issueDate: $("#issueDate").val(),
+          issueDept: $("#issueDept").val(),
+          issueNumber: $("#issueNumber").val(),
+          vehicleNumbers: $("#vehicleNumbers").val(),
+        };
+
+        // 發送 AJAX 請求
+        $.ajax({
+          url: "/add-case",
+          method: "POST",
+          contentType: "application/json",
+          data: JSON.stringify(formData),
+          success: (response) => {
+            alert(response.message); // 彈跳提示框
+          },
+          error: (error) => {
+            alert("案件新增失敗，請重試！");
+            console.error(error);
+          },
+        });
+      });
+    });
+  </script>
+</body>
+</html>

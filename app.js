@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const { engine } = require("express-handlebars");
 const bodyParser = require("body-parser");
@@ -22,11 +23,11 @@ app.use(express.static("public"));
 
 // 資料庫連接設置
 const db = mysql.createConnection({
-  host: "35.212.235.57",
-  user: "ccy102u",
-  password: "A10341131bc*",
-  database: "noisecarDB",
-  port: 3306,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
+  port: process.env.DB_PORT,
 });
 
 db.connect((err) => {

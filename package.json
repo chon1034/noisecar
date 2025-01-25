@@ -3,6 +3,7 @@
     "body-parser": "^1.20.3",
     "bootstrap": "^5.3.3",
     "csv-parser": "^3.1.0",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-handlebars": "^8.0.1",
     "jquery": "^3.7.1",
@@ -12,7 +13,7 @@
     "strip-bom-stream": "^5.0.0",
     "xlsx": "^0.18.5"
   },
-    "scripts": {
+  "scripts": {
     "start": "node app.js",
     "build": "echo 'No build step necessary'"
   }

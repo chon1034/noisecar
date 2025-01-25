@@ -62,11 +62,16 @@
   <div class="container">
     <h1>上傳車籍資料</h1>
 
+    <!-- 查詢日期 -->
+    <div class="form-group">
+      <label for="queryDate">查詢日期</label>
+      <input type="date" id="queryDate" name="queryDate" max="9999-12-31" required>
+    </div>
+
     <!-- 上傳機車車籍 -->
-    <form action="/upload-bike-registry" method="POST" enctype="multipart/form-data">
+    <form id="bikeForm" action="/upload-bike-registry" method="POST" enctype="multipart/form-data">
+      <input type="hidden" id="bikeQueryDate" name="queryDate">
       <div class="form-group">
-        <label for="bikeQueryDate">查詢日期</label>
-        <input type="date" id="bikeQueryDate" name="queryDate" max="9999-12-31" required>
         <label for="bikeFile">上傳機車車籍</label>
         <input type="file" id="bikeFile" name="bikeFile" accept=".csv" required>
       </div>
@@ -76,15 +81,32 @@
     <hr>
 
     <!-- 上傳汽車車籍 -->
-    <form action="/upload-car-registry" method="POST" enctype="multipart/form-data">
+    <form id="carForm" action="/upload-car-registry" method="POST" enctype="multipart/form-data">
+      <input type="hidden" id="carQueryDate" name="queryDate">
       <div class="form-group">
-        <label for="carQueryDate">查詢日期</label>
-        <input type="date" id="carQueryDate" name="queryDate" max="9999-12-31" required>
         <label for="carFile">上傳汽車車籍</label>
         <input type="file" id="carFile" name="carFile" accept=".csv" required>
       </div>
       <button type="submit">上傳汽車車籍</button>
     </form>
   </div>
+
+  <script>
+    // 獲取查詢日期和兩個表單的隱藏欄位
+    const queryDateInput = document.getElementById("queryDate");
+    const bikeQueryDateInput = document.getElementById("bikeQueryDate");
+    const carQueryDateInput = document.getElementById("carQueryDate");
+
+    // 當查詢日期變更時，同步更新隱藏欄位的值
+    queryDateInput.addEventListener("input", () => {
+      const queryDateValue = queryDateInput.value;
+      bikeQueryDateInput.value = queryDateValue;
+      carQueryDateInput.value = queryDateValue;
+    });
+
+    // 初始化時設置隱藏欄位的值
+    bikeQueryDateInput.value = queryDateInput.value;
+    carQueryDateInput.value = queryDateInput.value;
+  </script>
 </body>
 </html>

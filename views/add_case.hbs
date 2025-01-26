@@ -12,15 +12,17 @@
     <h1>新增案件</h1>
 
     <form id="addCaseForm" class="form-layout">
+      <!-- 案件年份 -->
       <div class="form-group">
         <label for="caseYear">案件年份</label>
         <select id="caseYear" name="caseYear" required>
           <option value="2023">2023</option>
-          <option value="2024" >2024</option>
+          <option value="2024">2024</option>
           <option value="2025">2025</option>
         </select>
       </div>
 
+      <!-- 案件月份 -->
       <div class="form-group">
         <label for="caseMonth">案件月份</label>
         <select id="caseMonth" name="caseMonth" required>
@@ -39,32 +41,40 @@
         </select>
       </div>
 
+      <!-- 來文日期 -->
       <div class="form-group">
         <label for="issueDate">來文日期</label>
         <input type="date" id="issueDate" name="issueDate" max="9999-12-31" required>
       </div>
 
+      <!-- 來文者 -->
       <div class="form-group">
         <label for="issueDept">來文者</label>
         <input type="text" id="issueDept" name="issueDept" placeholder="請輸入來文者" required>
       </div>
 
+      <!-- 來文文號 -->
       <div class="form-group">
         <label for="issueNumber">來文文號</label>
         <input type="text" id="issueNumber" name="issueNumber" placeholder="請輸入來文文號" required>
       </div>
 
+      <!-- 案件車號 -->
       <div class="form-group">
         <label for="vehicleNumbers">案件車號</label>
-        <textarea id="vehicleNumbers" name="vehicleNumbers" placeholder="每行輸入一個車號" required></textarea>
+        <textarea id="vehicleNumbers" name="vehicleNumbers" placeholder="每行輸入一個車號，例如：ABC-123\nXYZ-789" required></textarea>
+        <small class="help-text">請確保每行輸入一個有效的車號，並避免重複。</small>
       </div>
 
+      <!-- 提交按鈕 -->
       <button type="submit" class="btn-primary">上傳案件</button>
     </form>
+
+    <!-- 動態消息顯示 -->
+    <div id="responseMessage" style="margin-top: 20px;"></div>
   </div>
 
   <script>
-    // 使用 AJAX 提交表單
     $(document).ready(() => {
       $("#addCaseForm").on("submit", (e) => {
         e.preventDefault(); // 防止默認表單提交
@@ -85,10 +95,14 @@
           contentType: "application/json",
           data: JSON.stringify(formData),
           success: (response) => {
-            alert(response.message); // 彈跳提示框
+            $("#responseMessage").html(
+              `<p style="color: green;">${response.message}</p>`
+            );
           },
           error: (error) => {
-            alert("案件新增失敗，請重試！");
+            $("#responseMessage").html(
+              `<p style="color: red;">案件新增失敗：${error.responseJSON?.message || "請重試！"}</p>`
+            );
             console.error(error);
           },
         });

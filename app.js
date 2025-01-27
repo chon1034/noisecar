@@ -64,6 +64,7 @@ app.post("/add-case", async (req, res) => {
     // 插入或更新 source_case
     const sourceCaseSql = "INSERT IGNORE INTO source_case (issue_date, issue_dept, issue_number) VALUES (?, ?, ?)";
     await db.promise().query(sourceCaseSql, [issueDate, issueDept, issueNumber]);
+    let responseMessage = "";
 
     for (const vehicle of vehicles) {
       // 檢查或插入 cases
@@ -90,9 +91,17 @@ app.post("/add-case", async (req, res) => {
       // 插入 case_source_links
       const caseSourceLinksSql = "INSERT IGNORE INTO case_source_links (case_id, issue_number) VALUES (?, ?)";
       await db.promise().query(caseSourceLinksSql, [caseId, issueNumber]);
-    }
 
-    res.json({ message: "案件已成功新增並關聯！" });
+      // 插入 source_case_vehicle_links
+      const sourceCaseVehicleLinksSql =
+        "INSERT IGNORE INTO source_case_vehicle_links (issue_number, vehicle_number) VALUES (?, ?)";
+      await db.promise().query(sourceCaseVehicleLinksSql, [issueNumber, vehicle]);
+
+
+      // 添加成功訊息
+      responseMessage += `案件車號: ${vehicle}, ${issueDept}, ${issueNumber} 已成功新增!<br>`;
+    }
+    res.json({ message: responseMessage });
   } catch (err) {
     console.error("操作失敗：", err);
     res.status(500).json({ message: "新增案件失敗，請檢查伺服器日誌！" });

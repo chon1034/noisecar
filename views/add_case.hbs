@@ -71,7 +71,7 @@
     </form>
 
     <!-- 動態消息顯示 -->
-    <div id="responseMessage" style="margin-top: 20px;"></div>
+    <div id="responseMessage" style="margin-top: 20px; white-space: pre-wrap;"></div>
   </div>
 
   <script>
@@ -95,6 +95,7 @@
           contentType: "application/json",
           data: JSON.stringify(formData),
           success: (response) => {
+            // 使用 HTML 換行符號顯示分段訊息
             $("#responseMessage").html(
               `<p style="color: green;">${response.message}</p>`
             );

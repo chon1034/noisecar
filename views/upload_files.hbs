@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>來文公文上傳</title>
+  <!-- 引入 Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .container {
+      max-width: 500px; /* 縮減寬度為 500px */
+      background-color: white; /* 背景顏色為白色 */
+      padding: 20px; /* 內邊距 */
+      border-radius: 8px; /* 圓角 */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 陰影效果 */
+      position: relative; /* 設置容器為相對定位，用於放置回首頁按鈕 */
+    }
+
+    .home-button {
+      position: absolute; /* 設置按鈕為絕對定位 */
+      top: 10px; /* 距離容器頂部 10px */
+      right: 10px; /* 距離容器右側 10px */
+    }
+  </style>
+</head>
+<body class="bg-light d-flex justify-content-center align-items-center vh-100">
+  <div class="container">
+    <!-- 回首頁按鈕 -->
+    <div class="d-flex justify-content-end mb-3">
+      <a href="/" class="btn btn-primary home-button">回首頁</a>
+    </div>
+
+    <!-- 頁面標題 -->
+    <h1 class="header text-center mb-4">上傳來文PDF檔</h1>
+
+    <!-- 說明區域 -->
+    <div class="mb-4">
+      <p>檔名格式: <span class="text-primary fw-bold">YYYYMMDD_來文文號</span></p>
+      <p>檔名範例: <span class="text-primary fw-bold">20250203_澎警交字第114000000號</span></p>
+      <p class="text-danger fw-bold">註: 請確保依照格式命名，避免無法正確上傳資料庫。</p>
+    </div>
+
+    <!-- 上傳表單 -->
+    <form id="uploadForm" action="/upload-file" method="post" enctype="multipart/form-data">
+      <div class="mb-3">
+        <input type="file" class="form-control" id="files" name="files" accept=".pdf" multiple required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">上傳檔案</button>
+    </form>
+
+    <!-- 動態消息顯示區域 -->
+    <div id="messageBox" class="mt-3"></div>
+  </div>
+
+  <!-- 引入 Bootstrap JS 和 Popper.js -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch(form.action, {
+          method: "POST",
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          const successMessage = `
+            <p class="text-success">檔案已成功上傳！</p>
+            <ul>${result.files.map(file => `<li>${file}</li>`).join("")}</ul>
+          `;
+          document.getElementById("messageBox").innerHTML = successMessage;
+        } else {
+          const errorMessage = `<p class="text-danger">錯誤: ${result.message}</p>`;
+          document.getElementById("messageBox").innerHTML = errorMessage;
+        }
+      } catch (err) {
+        document.getElementById("messageBox").innerHTML = `<p class="text-danger">伺服器錯誤，請稍後重試！</p>`;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -5,10 +5,11 @@ const bodyParser = require("body-parser");
 const mysql = require("mysql2");
 const multer = require("multer");
 const csv = require("csv-parser");
-const fs = require("fs");
-const upload = multer({ dest: "uploads/" });
+const fs = require("fs").promises;
+//const upload = multer({ dest: "uploads/" });
 const app = express();
 const iconv = require("iconv-lite");
+const path = require("path"); // 新增這行
 
 // 設置模板引擎
 app.engine("hbs", engine({ extname: ".hbs", defaultLayout: "main" }));
@@ -29,6 +30,49 @@ const db = mysql.createConnection({
   database: process.env.DB_DATABASE,
   port: process.env.DB_PORT,
 });
+
+// 配置 Multer，處理上傳的檔案
+const storage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    try {
+      // 確保檔案名稱使用 UTF-8 解碼
+      const fileName = Buffer.from(file.originalname, "latin1").toString("utf8");
+      const match = fileName.match(/^(\d{8})_(.+)\.pdf$/);
+
+      if (!match) {
+        return cb(new Error("檔案名稱格式不正確，應為 YYYYMMDD_issue_number.pdf"));
+      }
+
+      const [_, date, issueNumber] = match;
+      const year = date.substring(0, 4); // 提取年份
+      const month = date.substring(4, 6); // 提取月份
+
+      // 檢查 issue_number 是否存在於 source_case 表中
+      const issueCheckSql = "SELECT COUNT(*) AS count FROM source_case WHERE issue_number = ?";
+      const [results] = await db.promise().query(issueCheckSql, [issueNumber]);
+
+      if (results[0].count === 0) {
+        return cb(new Error(`無法找到對應的 issue_number: ${issueNumber}`));
+      }
+
+      // 動態建立目錄 /uploads/YYYY/MM
+      const uploadPath = path.join(__dirname, "uploads", year, month);
+      await fs.mkdir(uploadPath, { recursive: true }); // 確保目錄存在
+
+      // 回傳檔案儲存路徑
+      cb(null, uploadPath);
+    } catch (err) {
+      cb(err);
+    }
+  },
+  filename: (req, file, cb) => {
+    // 使用 UTF-8 解碼後的檔案名稱儲存
+    const fileName = Buffer.from(file.originalname, "latin1").toString("utf8");
+    cb(null, fileName);
+  },
+});
+
+const upload = multer({ storage });
 
 db.connect((err) => {
   if (err) {
@@ -53,6 +97,11 @@ app.get("/upload-registry", (req, res) => {
   res.render("upload_registry");
 });
 
+// 上傳檔案頁面
+app.get("/upload-files", (req, res) => {
+  res.render("upload_files");
+});
+
 
 // 處理新增案件的提交請求
 app.post("/add-case", async (req, res) => {
@@ -64,6 +113,7 @@ app.post("/add-case", async (req, res) => {
     // 插入或更新 source_case
     const sourceCaseSql = "INSERT IGNORE INTO source_case (issue_date, issue_dept, issue_number) VALUES (?, ?, ?)";
     await db.promise().query(sourceCaseSql, [issueDate, issueDept, issueNumber]);
+
     let responseMessage = "";
 
     for (const vehicle of vehicles) {
@@ -76,9 +126,9 @@ app.post("/add-case", async (req, res) => {
         caseId = caseCheckResults[0].id;
       } else {
         const registrySql = `
-          SELECT owner_name FROM bike_registry WHERE query_number = ?
+          SELECT owner_name FROM bike_registry WHERE current_number = ?
           UNION
-          SELECT owner_name FROM car_registry WHERE query_number = ?
+          SELECT owner_name FROM car_registry WHERE current_number = ?
         `;
         const [registryResults] = await db.promise().query(registrySql, [vehicle, vehicle]);
         const ownerName = registryResults[0] ? registryResults[0].owner_name : "未知";
@@ -97,16 +147,17 @@ app.post("/add-case", async (req, res) => {
         "INSERT IGNORE INTO source_case_vehicle_links (issue_number, vehicle_number) VALUES (?, ?)";
       await db.promise().query(sourceCaseVehicleLinksSql, [issueNumber, vehicle]);
 
-
       // 添加成功訊息
-      responseMessage += `案件車號: ${vehicle}, ${issueDept}, ${issueNumber} 已成功新增!<br>`;
+      responseMessage += `案件車號: ${vehicle}, 來文者: ${issueDept}, 來文文號: ${issueNumber} 已成功新增!<br>`;
     }
+
     res.json({ message: responseMessage });
   } catch (err) {
     console.error("操作失敗：", err);
     res.status(500).json({ message: "新增案件失敗，請檢查伺服器日誌！" });
   }
 });
+
 
 // 處理機車車籍上傳
 app.post("/upload-bike-registry", upload.single("bikeFile"), (req, res) => {
@@ -287,7 +338,40 @@ function handleCsvUpload(req, res, tableName, fieldMapping) {
     });
 }
 
+// 上傳檔案處理邏輯
+app.post("/upload-file", upload.array("files", 10), async (req, res) => {
+  try {
+    const files = req.files;
+    const uploadedFiles = [];
 
+    for (const file of files) {
+      const fileName = Buffer.from(file.originalname, "latin1").toString("utf8");
+      const match = fileName.match(/^(\d{8})_(.+)\.pdf$/);
+
+      if (!match) {
+        return res.status(400).json({ message: `檔案名稱格式不正確，應為 YYYYMMDD_issue_number.pdf：${fileName}` });
+      }
+
+      const [_, date, issueNumber] = match;
+      const filePath = path.join("uploads", date.substring(0, 4), date.substring(4, 6), fileName);
+
+      // 更新資料庫
+      const updateSql = "UPDATE source_case SET filepath = ? WHERE issue_number = ?";
+      const [result] = await db.promise().query(updateSql, [filePath, issueNumber]);
+
+      if (result.affectedRows === 0) {
+        return res.status(400).json({ message: `無法更新 filepath，未找到 issue_number：${issueNumber}` });
+      }
+
+      uploadedFiles.push(fileName); // 記錄成功上傳的檔名
+    }
+
+    res.status(200).json({ message: "檔案已成功上傳並更新資料庫！", files: uploadedFiles });
+  } catch (err) {
+    console.error("檔案上傳失敗：", err);
+    res.status(500).json({ message: "檔案上傳失敗，請檢查伺服器日誌！" });
+  }
+});
 
 // 啟動伺服器
 app.listen(3000, () => {

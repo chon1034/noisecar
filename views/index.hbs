@@ -1,56 +1,61 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>首頁</title>
+  <meta charset="UTF-8"> <!-- 設定字符編碼為 UTF-8 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 設定頁面適配裝置寬度 -->
+  <title>首頁</title> <!-- 頁面標題 -->
+  <!-- 引入 Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #f5f5f5;
+    .hero-section {
+      background-image: linear-gradient(
+          rgba(0, 0, 0, 0.65),
+          rgba(0, 0, 0, 0.65)
+        ),
+        url('/images/header-bg.jpg'); /* 背景圖片 */
+      background-size: cover; /* 背景填充 */
+      background-position: center; /* 背景居中 */
+      height: 500px; /* 固定高度 */
+      color: white; /* 白色文字 */
+      display: flex; /* Flexbox 佈局 */
+      flex-direction: column; /* 子元素垂直排列 */
+      justify-content: center; /* 垂直置中 */
+      align-items: center; /* 水平置中 */
+      text-align: center; /* 文字置中 */
+      padding: 20px; /* 內邊距 */
+      border-radius: 8px; /* 圓角 */
     }
-    .container {
-      text-align: center;
-      background-color: #fff;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    .hero-section h1 {
+      font-size: 3rem; /* 主標題字體大小 */
+      font-weight: bold; /* 加粗字體 */
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* 文字陰影 */
     }
-    h1 {
-      margin-bottom: 30px;
+
+    .hero-section p {
+      font-size: 1.2rem; /* 副標題字體大小 */
+      margin-top: 10px; /* 上邊距 */
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); /* 文字陰影 */
     }
-    .button {
-      display: block;
-      width: 150px;
-      margin: 15px auto;
-      padding: 10px;
-      font-size: 16px;
-      text-align: center;
-      color: #fff;
-      background-color: #6a5acd;
-      border: none;
-      border-radius: 5px;
-      text-decoration: none;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    .button:hover {
-      background-color: #483d8b;
+
+    .btn-custom {
+      margin-top: 15px; /* 每個按鈕之間的間距 */
+      font-size: 1.2rem; /* 按鈕文字大小 */
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>首頁</h1>
-    <a href="/add-case" class="button">新增案件</a>
-    <a href="/query-case" class="button">查詢案件</a>
-    <a href="/upload-registry" class="button">匯入車籍資料</a>
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <h1>歡迎來到檢驗資料管理系統</h1>
+    <p>讓車輛檢驗和資料管理更加高效</p>
+    <!-- 按鈕組 -->
+    <a href="/add-case" class="btn btn-primary btn-custom">新增案件</a> <!-- 新增案件按鈕 -->
+    <a href="/query-case" class="btn btn-primary btn-custom">查詢案件</a> <!-- 查詢案件按鈕 -->
+    <a href="/upload-files" class="btn btn-primary btn-custom">上傳來文PDF檔</a> <!-- 上傳PDF檔按鈕 -->
+    <a href="/upload-registry" class="btn btn-primary btn-custom">匯入車籍資料</a> <!-- 匯入車籍資料按鈕 -->
   </div>
+  <!-- 引入 Bootstrap JS 和 Popper.js -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

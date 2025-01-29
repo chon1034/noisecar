@@ -1,21 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>新增案件</title>
-  <link rel="stylesheet" href="/css/style.css">
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-</head>
-<body>
-  <div class="container">
-    <h1>新增案件</h1>
+  <meta charset="UTF-8"> <!-- 設定文件的字符編碼為 UTF-8 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 讓網頁對不同裝置有良好的顯示效果 -->
+  <title>新增案件</title> <!-- 頁面標題 -->
+  <!-- 引入 Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .container {
+      position: relative; /* 設置容器為相對定位，用於放置回首頁按鈕 */
+      max-width: 500px; /* 設定最大寬度 */
+      background-color: #ffffff; /* 白色背景 */
+      padding: 20px; /* 內邊距 */
+      border-radius: 8px; /* 圓角效果 */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加陰影 */
+    }
 
-    <form id="addCaseForm" class="form-layout">
+    .home-button {
+      position: absolute; /* 設置按鈕為絕對定位 */
+      top: 10px; /* 距離容器頂部 10px */
+      right: 10px; /* 距離容器右側 10px */
+    }
+  </style>
+</head>
+<body class="bg-light d-flex justify-content-center align-items-center min-vh-100">
+  <div class="container bg-white p-4 rounded shadow-sm" style="max-width: 600px;">
+    <!-- 回首頁按鈕 -->
+    <a href="/" class="btn btn-primary home-button">回首頁</a> <!-- 確保按鈕位於右上角 -->
+
+    <!-- 頁面標題 -->
+    <h1 class="text-center mb-4">新增案件</h1>
+
+    <!-- 表單 -->
+    <form id="addCaseForm">
       <!-- 案件年份 -->
-      <div class="form-group">
-        <label for="caseYear">案件年份</label>
-        <select id="caseYear" name="caseYear" required>
+      <div class="mb-3">
+        <label for="caseYear" class="form-label">案件年份</label>
+        <select id="caseYear" name="caseYear" class="form-select" required>
           <option value="2023">2023</option>
           <option value="2024">2024</option>
           <option value="2025">2025</option>
@@ -23,9 +44,9 @@
       </div>
 
       <!-- 案件月份 -->
-      <div class="form-group">
-        <label for="caseMonth">案件月份</label>
-        <select id="caseMonth" name="caseMonth" required>
+      <div class="mb-3">
+        <label for="caseMonth" class="form-label">案件月份</label>
+        <select id="caseMonth" name="caseMonth" class="form-select" required>
           <option value="1">1</option>
           <option value="2">2</option>
           <option value="3">3</option>
@@ -42,72 +63,66 @@
       </div>
 
       <!-- 來文日期 -->
-      <div class="form-group">
-        <label for="issueDate">來文日期</label>
-        <input type="date" id="issueDate" name="issueDate" max="9999-12-31" required>
+      <div class="mb-3">
+        <label for="issueDate" class="form-label">來文日期</label>
+        <input type="date" id="issueDate" name="issueDate" class="form-control"  max="9999-12-31" required>
       </div>
 
+
       <!-- 來文者 -->
-      <div class="form-group">
-        <label for="issueDept">來文者</label>
-        <input type="text" id="issueDept" name="issueDept" placeholder="請輸入來文者" required>
+      <div class="mb-3">
+        <label for="issueDept" class="form-label">來文者</label>
+        <input type="text" id="issueDept" name="issueDept" class="form-control" placeholder="請輸入來文者" required>
       </div>
 
       <!-- 來文文號 -->
-      <div class="form-group">
-        <label for="issueNumber">來文文號</label>
-        <input type="text" id="issueNumber" name="issueNumber" placeholder="請輸入來文文號" required>
+      <div class="mb-3">
+        <label for="issueNumber" class="form-label">來文文號</label>
+        <input type="text" id="issueNumber" name="issueNumber" class="form-control" placeholder="請輸入來文文號" required>
       </div>
 
       <!-- 案件車號 -->
-      <div class="form-group">
-        <label for="vehicleNumbers">案件車號</label>
-        <textarea id="vehicleNumbers" name="vehicleNumbers" placeholder="每行輸入一個車號，例如：ABC-123\nXYZ-789" required></textarea>
-        <small class="help-text">請確保每行輸入一個有效的車號，並避免重複。</small>
+      <div class="mb-3">
+        <label for="vehicleNumbers" class="form-label">案件車號</label>
+        <textarea id="vehicleNumbers" name="vehicleNumbers" class="form-control" rows="5" placeholder="每行輸入一個車號。&#13;&#10;例如：ABC-1234&#13;&#10;　　　XYZ-6789" required></textarea>
+        <div class="text-danger fw-bold">請確保每行輸入一個有效的車號，並避免重複。</div>
       </div>
 
       <!-- 提交按鈕 -->
-      <button type="submit" class="btn-primary">上傳案件</button>
+      <button type="submit" class="btn btn-primary w-100">上傳案件</button>
     </form>
-
-    <!-- 動態消息顯示 -->
-    <div id="responseMessage" style="margin-top: 20px; white-space: pre-wrap;"></div>
   </div>
 
+  <!-- 引入 Bootstrap JS 和 Popper.js -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    $(document).ready(() => {
-      $("#addCaseForm").on("submit", (e) => {
-        e.preventDefault(); // 防止默認表單提交
+    document.getElementById("addCaseForm").addEventListener("submit", (e) => {
+      e.preventDefault(); // 阻止表單默認提交行為
+      const formData = {
+        caseYear: document.getElementById("caseYear").value,
+        caseMonth: document.getElementById("caseMonth").value,
+        issueDate: document.getElementById("issueDate").value,
+        issueDept: document.getElementById("issueDept").value,
+        issueNumber: document.getElementById("issueNumber").value,
+        vehicleNumbers: document.getElementById("vehicleNumbers").value,
+      };
 
-        const formData = {
-          caseYear: $("#caseYear").val(),
-          caseMonth: $("#caseMonth").val(),
-          issueDate: $("#issueDate").val(),
-          issueDept: $("#issueDept").val(),
-          issueNumber: $("#issueNumber").val(),
-          vehicleNumbers: $("#vehicleNumbers").val(),
-        };
-
-        // 發送 AJAX 請求
-        $.ajax({
-          url: "/add-case",
-          method: "POST",
-          contentType: "application/json",
-          data: JSON.stringify(formData),
-          success: (response) => {
-            // 使用 HTML 換行符號顯示分段訊息
-            $("#responseMessage").html(
-              `<p style="color: green;">${response.message}</p>`
-            );
-          },
-          error: (error) => {
-            $("#responseMessage").html(
-              `<p style="color: red;">案件新增失敗：${error.responseJSON?.message || "請重試！"}</p>`
-            );
-            console.error(error);
-          },
+      // 發送 AJAX 請求
+      fetch("/add-case", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          alert(data.message || "案件新增成功！");
+        })
+        .catch((error) => {
+          console.error("案件新增失敗：", error);
+          alert("案件新增失敗，請重試！");
         });
-      });
     });
   </script>
 </body>

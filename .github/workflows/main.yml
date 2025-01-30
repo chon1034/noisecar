@@ -22,6 +22,6 @@ jobs:
           port: 22  # 確保 SSH 端口是 22
           script: |
             cd /var/www/chon1034
-            git pull origin main
+            git pull origin main || git clone https://github.com/chon1034/noisecar.git .
             npm install
-            systemctl restart app.js
+            systemctl restart app.js.service

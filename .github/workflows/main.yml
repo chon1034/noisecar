@@ -21,15 +21,14 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22  # 確保 SSH 端口是 22
           script: |
-            if [ ! -d "/var/www/chon1034" ]; then
-              mkdir -p /var/www/chon1034
+            if [ ! -d "/home/celous175/var/www/noisecar" ]; then
+              mkdir -p /home/celous175/var/www/noisecar
             fi
-            cd ~/var/www/chon1034
+            cd /home/celous175/var/www/noisecar
 
             if [ ! -d ".git" ]; then
               git clone https://github.com/chon1034/noisecar.git .
             else
-              git reset --hard origin/main
               git pull origin main
             fi
 

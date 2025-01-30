@@ -24,7 +24,7 @@ jobs:
             if [ ! -d "/var/www/chon1034" ]; then
               mkdir -p /var/www/chon1034
             fi
-            cd /var/www/chon1034
+            cd ~/var/www/chon1034
 
             if [ ! -d ".git" ]; then
               git clone https://github.com/chon1034/noisecar.git .

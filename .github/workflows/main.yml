@@ -29,6 +29,7 @@ jobs:
             if [ ! -d ".git" ]; then
               git clone https://github.com/chon1034/noisecar.git .
             else
+              git reset --hard origin/main
               git pull origin main
             fi
 

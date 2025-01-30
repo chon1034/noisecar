@@ -1,0 +1,42 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main  # 當 main 分支有 push 時觸發
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 獲取程式碼
+        uses: actions/checkout@v3
+
+      - name: 部署到伺服器
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22  # 確保 SSH 端口是 22
+          script: |
+            if [ ! -d "/var/www/chon1034" ]; then
+              mkdir -p /var/www/chon1034
+            fi
+            cd ~/var/www/chon1034
+
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/chon1034/noisecar.git .
+            else
+              git pull origin main
+            fi
+
+            if [ ! -f "package.json" ]; then
+              echo "ERROR: package.json not found!"
+              exit 1
+            fi
+
+            npm install
+
+            sudo systemctl restart app.js.service

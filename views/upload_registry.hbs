@@ -8,18 +8,12 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     .container {
-      position: relative; /* 設置容器為相對定位，方便定位內部元素 */
+      position: relative; /* 設置容器為相對定位，用於放置回首頁按鈕 */
       max-width: 500px; /* 設定最大寬度 */
       background-color: #ffffff; /* 白色背景 */
       padding: 20px; /* 內邊距 */
-      border-radius: 8px; /* 圓角效果 */
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加陰影 */
-    }
-
-    .home-button {
-      position: absolute; /* 絕對定位 */
-      top: 10px; /* 距離容器頂部 */
-      right: 10px; /* 距離容器右側 */
+      /*border-radius: 8px; /* 圓角效果 */
+      /*box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加陰影 */
     }
 
     .form-group {
@@ -29,61 +23,79 @@
     .btn-custom {
       margin-top: 15px; /* 提交按鈕與其他元素的距離 */
     }
+    .home-button {
+      position: absolute; /* 設置按鈕為絕對定位 */
+      top: 10px; /* 距離容器頂部 10px */
+      right: 10px; /* 距離容器右側 10px */
+    }
   </style>
 </head>
 <body class="bg-light d-flex justify-content-center align-items-center min-vh-100">
   <div class="container">
     <!-- 回首頁按鈕 -->
-    <a href="/" class="btn btn-primary home-button">回首頁</a>
+    <div class="d-flex justify-content-end mb-3">
+      <a href="/" class="btn btn-primary home-button">回首頁</a>
+    </div>
 
     <!-- 頁面標題 -->
     <h1 class="text-center mb-4">上傳車籍資料</h1>
 
-    <!-- 查詢日期 -->
-    <div class="form-group">
-      <label for="queryDate" class="form-label">查詢日期</label>
-      <input type="date" id="queryDate" name="queryDate" class="form-control" max="9999-12-31" required>
+  <form id="uploadForm" method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label class="form-label">選擇資料類型</label>
+      <select class="form-select" id="type">
+        <option value="bike">機車</option>
+        <option value="car">汽車</option>
+      </select>
     </div>
-
-    <!-- 上傳機車車籍 -->
-    <form id="bikeForm" action="/upload-bike-registry" method="POST" enctype="multipart/form-data">
-      <input type="hidden" id="bikeQueryDate" name="queryDate">
-      <div class="form-group">
-        <label class="form-label">機車車籍 🛵🛵🛵</label>
-        <input type="file" id="bikeFile" name="bikeFile" class="form-control" accept=".csv" required>
-      </div>
-      <button type="submit" class="btn btn-primary btn-custom w-100">上傳機車車籍</button>
-    </form>
-
-    <hr>
-
-    <!-- 上傳汽車車籍 -->
-    <form id="carForm" action="/upload-car-registry" method="POST" enctype="multipart/form-data">
-      <input type="hidden" id="carQueryDate" name="queryDate">
-      <div class="form-group">
-        <label class="form-label">汽車車籍 🚗🚗🚗</label>
-        <input type="file" id="carFile" name="carFile" class="form-control" accept=".csv" required>
-      </div>
-      <button type="submit" class="btn btn-primary btn-custom w-100">上傳汽車車籍</button>
-    </form>
+    <div class="mb-3">
+      <label for="registryFile" class="form-label">選擇 CSV 檔案</label>
+      <input
+        class="form-control"
+        type="file"
+        id="registryFile"
+        name="registryFile"
+        accept=".csv"
+        required
+      />
+    </div>
+    <button type="submit" class="btn btn-primary w-100">上傳資料</button>
+  </form>
+  <!-- 顯示回傳結果訊息的區域 -->
+  <div id="resultMessage" class="mt-3"></div>
   </div>
 
   <!-- 引入 Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // 同步查詢日期到隱藏欄位
-    const queryDateInput = document.getElementById("queryDate");
-    const bikeQueryDateInput = document.getElementById("bikeQueryDate");
-    const carQueryDateInput = document.getElementById("carQueryDate");
-
-    queryDateInput.addEventListener("input", () => {
-      const queryDateValue = queryDateInput.value;
-      bikeQueryDateInput.value = queryDateValue;
-      carQueryDateInput.value = queryDateValue;
-    });
-
-    bikeQueryDateInput.value = queryDateInput.value;
-    carQueryDateInput.value = queryDateInput.value;
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"> </script>
+<script>
+  // 使用 fetch API 處理表單送出，並在同一頁面上顯示伺服器回傳的成功或錯誤訊息
+  document.getElementById("uploadForm").addEventListener("submit", async function (e) {
+    e.preventDefault(); // 防止表單預設送出行為
+    const type = document.getElementById("type").value; // 取得所選資料類型
+    const formData = new FormData(this); // 封裝表單資料（包含檔案上傳）
+    try {
+      // 送出 POST 請求至 /upload-registry/:type
+      const response = await fetch("/upload-registry/" + type, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      // 根據 response.ok 判斷回傳狀態，顯示相應的訊息
+      if (!response.ok) {
+        // 錯誤訊息以 alert-danger 顯示
+        document.getElementById("resultMessage").innerHTML =
+          `<div class="alert alert-danger" role="alert">${data.message}</div>`;
+      } else {
+        // 成功訊息以 alert-success 顯示
+        document.getElementById("resultMessage").innerHTML =
+          `<div class="alert alert-success" role="alert">${data.message}</div>`;
+      }
+    } catch (error) {
+      console.error("上傳錯誤:", error);
+      document.getElementById("resultMessage").innerHTML =
+        `<div class="alert alert-danger" role="alert">上傳失敗，請稍後再試</div>`;
+    }
+  });
+</script>
 </body>
 </html>

@@ -446,7 +446,7 @@ app.post("/post-case", uploadPostFile.single("postFile"), async (req, res) => {
 
 
 // 啟動伺服器，監聽 3000 埠號
-app.listen(3000, () => {
-  console.log("伺服器已啟動：http://localhost:3000");
+app.listen(443, () => {
+  console.log("伺服器已啟動：http://localhost:443");
 });
 

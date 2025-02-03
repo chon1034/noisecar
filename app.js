@@ -54,8 +54,7 @@ app.get("/upload-registry", (req, res) => {
   res.render("upload_registry");
 });
 
-<<<<<<< Updated upstream
-=======
+
 // 新增 /view-reg 路由，顯示 bike_registry 或 car_registry 資料表所有欄位與所有資料
 app.get("/view-reg", async (req, res) => {
   // 1. 從查詢參數中取得 type，若未提供則預設為 "bike"
@@ -105,7 +104,7 @@ app.get("/view-reg", async (req, res) => {
   }
 });
 
->>>>>>> Stashed changes
+
 // 使用 multer 設定記憶體儲存空間，用以處理檔案上傳
 const upload_reg = multer({ storage: multer.memoryStorage() });
 

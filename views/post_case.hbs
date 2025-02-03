@@ -43,7 +43,7 @@
         <label for="vehicleNumbers" class="form-label">通知車號</label>
         <textarea id="vehicleNumbers" name="vehicleNumbers" class="form-control" rows="5" placeholder="每行輸入一個車號" required></textarea>
       </div>
-      <div id="checkResult" class="mt-3"></div>
+      <div id="checkResult" class="mt-3 " ></div>
       <button type="button" id="checkButton" class="btn btn-primary w-100 mb-3">檢查車號</button>
       <div class="mb-3">
         <label class="form-label">上傳發文檔案 (PDF)</label>
@@ -102,9 +102,9 @@
         resultDiv.innerHTML = result
           .map(
             (item) =>
-              `<p class="${item.exists ? "check-result-ok" : "check-result-error"}">${item.vehicleNumber}: ${
+              `<div class=" ${item.exists ? "check-result-ok alert alert-success" : "check-result-error alert alert-danger" }  role="alert"">${item.vehicleNumber}: ${
                 item.exists ? "確認OK" : "查無車號，請檢查是否有誤"
-              }</p>`
+              }</div>`
           )
           .join("");
       } catch (err) {

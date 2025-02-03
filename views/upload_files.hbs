@@ -73,10 +73,12 @@
             <p class="text-success">檔案已成功上傳！</p>
             <ul>${result.files.map(file => `<li>${file}</li>`).join("")}</ul>
           `;
-          document.getElementById("messageBox").innerHTML = successMessage;
+          //document.getElementById("messageBox").innerHTML = successMessage;
+          document.getElementById("messageBox").innerHTML = `<div class="alert alert-success" role="alert">${successMessage}</div>`;
         } else {
           const errorMessage = `<p class="text-danger">錯誤: ${result.message}</p>`;
-          document.getElementById("messageBox").innerHTML = errorMessage;
+          //document.getElementById("messageBox").innerHTML = errorMessage;
+          document.getElementById("messageBox").innerHTML = `<div class="alert alert-danger" role="alert">${errorMessage}</div>`;
         }
       } catch (err) {
         document.getElementById("messageBox").innerHTML = `<p class="text-danger">伺服器錯誤，請稍後重試！</p>`;

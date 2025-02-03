@@ -21,22 +21,38 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22  # 確保 SSH 端口是 22
           script: |
+            set -e  # 若有錯誤則終止腳本
+            
+            echo " 檢查專案目錄..."
             if [ ! -d "/home/celous175/var/www/noisecar" ]; then
               mkdir -p /home/celous175/var/www/noisecar
             fi
+            
             cd /home/celous175/var/www/noisecar
 
+            echo "檢查 Git 儲存庫..."
             if [ ! -d ".git" ]; then
               git clone https://github.com/chon1034/noisecar.git .
             else
-              git pull origin main
+              git reset --hard HEAD
+              git pull origin main --force
             fi
-
+            
             if [ ! -f "package.json" ]; then
-              echo "ERROR: package.json not found!"
+              echo " ERROR: package.json not found!"
               exit 1
             fi
+            
+            echo " 修正目錄權限..."
+            sudo chown -R $USER:$USER /home/celous175/var/www/noisecar
+            sudo chmod -R 775 /home/celous175/var/www/noisecar
 
-            npm install
+            echo " 安裝 npm 依賴..."
+            npm install --omit=dev --unsafe-perm
 
+            echo " 重新啟動應用程式..."
+            sudo systemctl daemon-reload
             sudo systemctl restart app.js.service
+            sudo systemctl status app.js.service --no-pager || exit 1
+
+            echo " 部署完成！"

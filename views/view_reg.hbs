@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <!-- 固定 viewport 寬度為 1920px -->
+  <meta name="viewport" content="width=1920px, initial-scale=1.0">
+  <title>檢視 {{type}} 資料</title>
+  <!-- 引入 Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* 固定頁面寬度 1920px，置中顯示，全站文字 12px */
+    .container {
+      position: relative; /* 設置容器為相對定位，用於放置回首頁按鈕 */
+      max-width: 1920px; /* 設定最大寬度 */
+      background-color: #ffffff; /* 白色背景 */
+      padding: 20px; /* 內邊距 */
+      /*border-radius: 8px; /* 圓角效果 */
+      /*box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加陰影 */
+    }
+    body {
+      width: 1920px;
+      margin: 0 auto;
+      font-size: 16px;
+      position: relative;
+    }
+    /* 主內容區增加下方空間，避免被固定 slider 遮蔽 */
+    .content-wrapper {
+      padding-bottom: 40px; /* 留出空間給最下方的 slider */
+    }
+    /* 表格容器設定：同時允許水平與垂直捲動 */
+    #tableContainer {
+      overflow-x: auto;
+      overflow-y: auto;
+      max-height: 700px; /* 可依需求設定適當高度，若內容過多會出現垂直捲軸 */
+    }
+    /* 表格基本樣式：依內容自動調整欄位寬度，長文字不換行，以省略號顯示 */
+    table {
+      table-layout: auto;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    table th, table td {
+      padding: 8px;
+      border: 1px solid #dee2e6;
+      text-align: center;
+      vertical-align: middle;
+      white-space: nowrap;       /* 長文字不換行 */
+      overflow: hidden;          /* 隱藏超出內容 */
+      text-overflow: ellipsis;   /* 超出部分以省略號表示 */
+    }
+    /* 當滑鼠移到資料列時，高亮該列 */
+    #tableContainer table tbody tr:hover td {
+      background-color: #FFE66F !important;
+    }
+
+    /* slider input 自訂寬度，讓使用者操作方便 */
+    #scrollSlider {
+      width: 100%;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container-fluid mt-5 content-wrapper">
+    <!-- 頁面標題 -->
+    <h1 class="mb-4">檢視 {{type}} 資料</h1>
+    <!-- 切換資料表按鈕 -->
+    <div class="mb-3">
+      <a href="/view-reg?type=bike" class="btn btn-primary me-2">檢視機車資料</a>
+      <a href="/view-reg?type=car" class="btn btn-primary me-2">檢視汽車資料</a>     
+      <a href="/" class="btn btn-primary me-2">回首頁</a>
+    </div>
+
+
+    <!-- 表格容器 -->
+    <div class="table-responsive" id="tableContainer">
+      <table class="table table-bordered ">
+        <thead class="table-light">
+          <tr>
+            <!-- 依據 displayColumns (中文欄位名稱) 產生表頭 -->
+            {{#each columns}}
+              <th>{{this}}</th>
+            {{/each}}
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 根據 keys (原始欄位名稱) 產生每筆資料列 -->
+          {{#each records}}
+            <tr>
+              {{#each ../keys}}
+                <td>{{lookup ../this this}}</td>
+              {{/each}}
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  <!-- 引入 Bootstrap 5 JavaScript Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // 當頁面載入完成後，設定 slider 與表格容器之間的連動
+    window.addEventListener('load', function() {
+      const container = document.getElementById('tableContainer');
+      const slider = document.getElementById('scrollSlider');
+
+      // 更新 slider 最大值為容器可捲動的最大值
+      function updateSliderMax() {
+        slider.max = container.scrollWidth - container.clientWidth;
+      }
+      updateSliderMax();
+
+      // 當 slider 改變時，調整容器的 scrollLeft
+      slider.addEventListener('input', function() {
+        container.scrollLeft = this.value;
+      });
+
+      // 當容器捲動時，同步更新 slider 值
+      container.addEventListener('scroll', function() {
+        slider.value = container.scrollLeft;
+      });
+
+      // 視窗大小改變時重新計算 slider 最大值
+      window.addEventListener('resize', updateSliderMax);
+    });
+
+  </script>
+
+</body>
+</html>

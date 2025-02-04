@@ -55,6 +55,27 @@ app.get("/upload-registry", (req, res) => {
 });
 
 
+
+//在路由中傳入 type（例如 type 為 "bike" 或 "car"）時，模板就會根據條件顯示對應的字串。
+app.engine("hbs", engine({
+  extname: ".hbs",
+  defaultLayout: "main",
+  helpers: {
+    ifCond: function (v1, operator, v2, options) {
+      switch (operator) {
+        case "==":
+          return (v1 == v2) ? options.fn(this) : options.inverse(this);
+        // 如有其他比較需求，可再新增 case
+        default:
+          return options.inverse(this);
+      }
+    }
+  }
+}));
+app.set("view engine", "hbs");
+app.set("views", "./views");
+
+
 // 新增 /view-reg 路由，顯示 bike_registry 或 car_registry 資料表所有欄位與所有資料
 app.get("/view-reg", async (req, res) => {
   // 1. 從查詢參數中取得 type，若未提供則預設為 "bike"
@@ -415,9 +436,7 @@ app.post("/post-case", uploadPostFile.single("postFile"), async (req, res) => {
     const filePath = `/uploads/post_case/${year}/${month}/${fileName}`; // 使用解碼後的檔名生成 filepath
 
     // 更新 post_case 表
-    await createPool
-      .promise()
-      .query(
+    await pool.promise().query(
         `INSERT INTO post_case (post_date, post_number, filepath)
          VALUES (?, ?, ?)
          ON DUPLICATE KEY UPDATE post_date = VALUES(post_date), filepath = VALUES(filepath)`,
@@ -426,9 +445,7 @@ app.post("/post-case", uploadPostFile.single("postFile"), async (req, res) => {
 
     // 更新 post_case_vehicle_links 表
     for (const vehicle of vehicleList) {
-      await pool
-        .promise()
-        .query(
+      await pool.promise().query(
           `INSERT INTO post_case_vehicle_links (post_number, vehicle_number)
            VALUES (?, ?)
            ON DUPLICATE KEY UPDATE vehicle_number = VALUES(vehicle_number)`,

@@ -8,87 +8,116 @@
   <!-- 引入 Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    /* 固定頁面寬度 1920px，置中顯示，全站文字 12px */
-    .container {
-      position: relative; /* 設置容器為相對定位，用於放置回首頁按鈕 */
-      max-width: 1920px; /* 設定最大寬度 */
-      background-color: #ffffff; /* 白色背景 */
-      padding: 20px; /* 內邊距 */
-      /*border-radius: 8px; /* 圓角效果 */
-      /*box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加陰影 */
-    }
+    /* 頁面與容器背景皆設定為白色 */
     body {
       width: 1920px;
       margin: 0 auto;
       font-size: 16px;
+      background-color: #ffffff;
       position: relative;
     }
-    /* 主內容區增加下方空間，避免被固定 slider 遮蔽 */
-    .content-wrapper {
-      padding-bottom: 40px; /* 留出空間給最下方的 slider */
+    .container {
+      position: relative;
+      max-width: 1920px;
+      background-color: #ffffff;
+      padding: 20px;
     }
-    /* 表格容器設定：同時允許水平與垂直捲動 */
+    /* 主內容區增加下方空間 */
+    .content-wrapper {
+      padding-bottom: 40px;
+    }
+    /* 表格容器：允許水平與垂直捲動 */
     #tableContainer {
       overflow-x: auto;
       overflow-y: auto;
-      max-height: 700px; /* 可依需求設定適當高度，若內容過多會出現垂直捲軸 */
+      max-height: 700px;
     }
-    /* 表格基本樣式：依內容自動調整欄位寬度，長文字不換行，以省略號顯示 */
+    /* 表格基本樣式，背景設定為白色 */
     table {
       table-layout: auto;
       border-collapse: collapse;
       width: 100%;
+      background-color: #ffffff;
     }
     table th, table td {
       padding: 8px;
       border: 1px solid #dee2e6;
       text-align: center;
       vertical-align: middle;
-      white-space: nowrap;       /* 長文字不換行 */
-      overflow: hidden;          /* 隱藏超出內容 */
-      text-overflow: ellipsis;   /* 超出部分以省略號表示 */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background-color: #ffffff;
     }
-    /* 當滑鼠移到資料列時，高亮該列 */
+    /* 滑鼠移到資料列時高亮 */
     #tableContainer table tbody tr:hover td {
       background-color: #FFE66F !important;
     }
-
-    /* slider input 自訂寬度，讓使用者操作方便 */
+    /* --- 以下為凍結設定 --- */
+    /* 固定表頭 */
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #ffffff;
+      z-index: 2;
+    }
+    /* 固定前三欄（凍結後的背景用固定色，以免露出捲動區內容） */
+    table th:nth-child(-n+3),
+    table td:nth-child(-n+3) {
+      position: sticky;
+      background: #ffffff;
+    }
+    /* 交叉區塊（表頭的前三欄）需較高 z-index */
+    thead th:nth-child(-n+3) {
+      z-index: 4;
+    }
+    /* slider input 自訂寬度 */
     #scrollSlider {
       width: 100%;
     }
-
   </style>
 </head>
 <body>
   <div class="container-fluid mt-5 content-wrapper">
-    <!-- 頁面標題 -->
-    <h1 class="mb-4">檢視 {{type}} 資料</h1>
-    <!-- 切換資料表按鈕 -->
+    <!-- 頁面標題與搜尋欄 -->
+    <div class="d-flex align-items-center mb-4">
+      <h1 class="me-3">
+        檢視{{#ifCond type "==" "bike"}}機車{{else}}汽車{{/ifCond}}車籍
+      </h1>
+      <!-- 搜尋欄位：current_number -->
+      <input id="searchInput" type="text" class="form-control me-2" style="max-width:300px;" placeholder="搜尋車號">
+      <!-- 搜尋欄位：owner_name -->
+      <input id="ownerSearchInput" type="text" class="form-control" style="max-width:300px;" placeholder="搜尋車主">
+    </div>
+    <!-- 切換資料表與按鈕 -->
     <div class="mb-3">
       <a href="/view-reg?type=bike" class="btn btn-primary me-2">檢視機車資料</a>
-      <a href="/view-reg?type=car" class="btn btn-primary me-2">檢視汽車資料</a>     
+      <a href="/view-reg?type=car" class="btn btn-primary me-2">檢視汽車資料</a>
+      <!-- 調換順序：先匯出，再回首頁 -->
+      <button id="exportBtn" class="btn btn-success me-2">匯出 XLSX</button>
       <a href="/" class="btn btn-primary me-2">回首頁</a>
     </div>
 
-
     <!-- 表格容器 -->
     <div class="table-responsive" id="tableContainer">
-      <table class="table table-bordered ">
+      <table class="table table-bordered">
         <thead class="table-light">
           <tr>
-            <!-- 依據 displayColumns (中文欄位名稱) 產生表頭 -->
             {{#each columns}}
               <th>{{this}}</th>
             {{/each}}
           </tr>
         </thead>
-        <tbody>
-          <!-- 根據 keys (原始欄位名稱) 產生每筆資料列 -->
+        <tbody id="tableBody">
           {{#each records}}
             <tr>
               {{#each ../keys}}
-                <td>{{lookup ../this this}}</td>
+                <td 
+                  {{#ifCond this "==" "current_number"}}class="current-number"{{/ifCond}}
+                  {{#ifCond this "==" "owner_name"}}class="owner-name"{{/ifCond}}
+                >
+                  {{lookup ../this this}}
+                </td>
               {{/each}}
             </tr>
           {{/each}}
@@ -97,36 +126,79 @@
     </div>
   </div>
   
-
+  <!-- 引入 SheetJS (xlsx) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <!-- 引入 Bootstrap 5 JavaScript Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // 當頁面載入完成後，設定 slider 與表格容器之間的連動
     window.addEventListener('load', function() {
+      // 動態計算前三欄的 left 偏移量
+      const table = document.querySelector('#tableContainer table');
+      if (table) {
+        const headerCells = table.querySelectorAll('thead th');
+        const freezeCount = Math.min(3, headerCells.length);
+        let leftOffset = 0;
+        for (let i = 0; i < freezeCount; i++) {
+          const cellWidth = headerCells[i].offsetWidth;
+          headerCells[i].style.left = leftOffset + 'px';
+          table.querySelectorAll('tbody tr').forEach(row => {
+            const cell = row.children[i];
+            if (cell) {
+              cell.style.left = leftOffset + 'px';
+            }
+          });
+          leftOffset += cellWidth;
+        }
+      }
+      
+      // 匯出 XLSX 功能
+      const exportBtn = document.getElementById('exportBtn');
+      exportBtn.addEventListener('click', function() {
+        const workbook = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
+        XLSX.writeFile(workbook, `export_${Date.now()}.xlsx`);
+      });
+      
+      // 搜尋功能：根據 current_number 與 owner_name 同時篩選
+      function filterRows() {
+        const numberQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+        const ownerQuery = document.getElementById('ownerSearchInput').value.trim().toLowerCase();
+        const tbody = document.getElementById('tableBody');
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach(row => {
+          const currentNumberCell = row.querySelector('.current-number');
+          const ownerCell = row.querySelector('.owner-name');
+          const currentText = currentNumberCell ? currentNumberCell.textContent.toLowerCase() : "";
+          const ownerText = ownerCell ? ownerCell.textContent.toLowerCase() : "";
+          // 若兩個條件皆符合（或搜尋框留空則視為符合）則顯示該列
+          if (currentText.includes(numberQuery) && ownerText.includes(ownerQuery)) {
+            row.style.display = "";
+          } else {
+            row.style.display = "none";
+          }
+        });
+      }
+      
+      // 監聽兩個搜尋框的輸入事件
+      document.getElementById('searchInput').addEventListener('input', filterRows);
+      document.getElementById('ownerSearchInput').addEventListener('input', filterRows);
+      
+      // 若頁面中有 slider，可加入以下同步邏輯（選用）
       const container = document.getElementById('tableContainer');
       const slider = document.getElementById('scrollSlider');
-
-      // 更新 slider 最大值為容器可捲動的最大值
       function updateSliderMax() {
-        slider.max = container.scrollWidth - container.clientWidth;
+        if (slider) slider.max = container.scrollWidth - container.clientWidth;
       }
       updateSliderMax();
-
-      // 當 slider 改變時，調整容器的 scrollLeft
-      slider.addEventListener('input', function() {
-        container.scrollLeft = this.value;
-      });
-
-      // 當容器捲動時，同步更新 slider 值
+      if (slider) {
+        slider.addEventListener('input', function() {
+          container.scrollLeft = this.value;
+        });
+      }
       container.addEventListener('scroll', function() {
-        slider.value = container.scrollLeft;
+        if (slider) slider.value = container.scrollLeft;
       });
-
-      // 視窗大小改變時重新計算 slider 最大值
       window.addEventListener('resize', updateSliderMax);
     });
-
   </script>
-
 </body>
 </html>

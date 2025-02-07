@@ -10,16 +10,73 @@ const app = express();
 const iconv = require("iconv-lite");
 const path = require("path");
 const { bikeFieldMapping, carFieldMapping } = require("./fieldMapping");
+const session = require("express-session");
+const passport = require("passport");
+const LocalStrategy = require("passport-local").Strategy;
+const bcrypt = require("bcrypt");
+const flash = require("connect-flash");
+const saltRounds = 10;
 
-// 設置模板引擎 (使用 handlebars，並指定預設 layout 為 main)
-app.engine("hbs", engine({ extname: ".hbs", defaultLayout: "main" }));
+
+// 設置模板引擎，並註冊 ifCond 與 getCellClass 兩個 helper
+app.engine("hbs", engine({
+  extname: ".hbs",
+  defaultLayout: "main",
+  helpers: {
+    // ifCond 用來在模板中進行比較
+    ifCond: function (v1, operator, v2, options) {
+      switch (operator) {
+        case "==":
+          return (v1 == v2) ? options.fn(this) : options.inverse(this);
+        default:
+          return options.inverse(this);
+      }
+    },
+    // getCellClass 用於 view_reg.hbs 中依據 key 產生 cell class
+    getCellClass: function (key) {
+      if (key === "current_number") return "current-number";
+      if (key === "owner_name") return "owner-name";
+      return "";
+    }
+  }
+}));
 app.set("view engine", "hbs");
 app.set("views", "./views");
+
+
+
+
+// 設定 express-session
+app.use(session({
+  secret: process.env.SESSION_SECRET || "mySecretKey",  // 請從環境變數讀取或改用安全的字串
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false }  // 若是 HTTPS，則可以設為 true
+}));
+
+// 啟用 flash
+app.use(flash());
+
+
+// 初始化 Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // 中間件設定：解析 URL 編碼與 JSON 格式請求，同時指定靜態檔案目錄
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static("public"));
+
+// 設定 express-session
+app.use(session({
+  secret: process.env.SESSION_SECRET || "mySecretKey", // 請設定安全的 secret
+  resave: false,
+  saveUninitialized: false
+}));
+
+// 初始化 Passport 並使用 session
+app.use(passport.initialize());
+app.use(passport.session());
 
 // 建立 MySQL 連線池，啟用 keep-alive 相關設定，並設定連線逾時、等待連線等參數
 const pool = mysql.createPool({
@@ -44,40 +101,148 @@ pool.getConnection((err, connection) => {
   connection.release(); // 釋放連線回池中
 });
 
-// 首頁路由，渲染 index.hbs
-app.get("/", (req, res) => {
-  res.render("index");
+//檢查認證的 middleware
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect("/login");
+}
+
+
+
+// Passport LocalStrategy 設定
+passport.use(new LocalStrategy(async (username, password, done) => {
+  try {
+    // 查詢用戶資料，假設用戶資料儲存在 users 資料表中
+    const [rows] = await pool.promise().query("SELECT * FROM users WHERE username = ?", [username]);
+    if (rows.length === 0) {
+      return done(null, false, { message: "無效的帳號或密碼" });
+    }
+    const user = rows[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return done(null, false, { message: "無效的帳號或密碼" });
+    }
+    return done(null, user);
+  } catch (err) {
+    return done(err);
+  }
+}));
+
+// 序列化與反序列化用戶
+passport.serializeUser((user, done) => {
+  done(null, user.id);
 });
+passport.deserializeUser(async (id, done) => {
+  try {
+    const [rows] = await pool.promise().query("SELECT * FROM users WHERE id = ?", [id]);
+    if (rows.length === 0) {
+      return done(new Error("用戶不存在"));
+    }
+    done(null, rows[0]);
+  } catch (err) {
+    done(err);
+  }
+});
+
+// Middleware: 檢查是否已認證
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect("/login");
+}
+
+// 首頁路由，渲染 index.hbs
+//只有已登入的使用者才能看到 index.hbs。如果未認證，使用者會被導向 /login。
+app.get("/", ensureAuthenticated, (req, res) => {
+  res.render("index", { user: req.user,
+    title: "Noisecar"
+  });
+});
+
+// 登入頁面，將 flash 訊息傳遞給模板
+app.get("/login", (req, res) => {
+  res.render("login", {
+    errorMessage: req.flash("error"),
+    title: "Noisecar - 登入"
+  });
+});
+
+// 登入請求，啟用 failureFlash：true 讓錯誤訊息儲存至 flash
+app.post("/login", passport.authenticate("local", {
+  successRedirect: "/",  // 登入成功後導向首頁 (index.hbs)
+  failureRedirect: "/login",
+  failureFlash: true
+}));
+
+// 登出路由
+app.get("/logout", (req, res, next) => {
+  req.logout((err) => {
+    if (err) { return next(err); }
+    res.redirect("/login");
+  });
+});
+
+
+
+app.get("/users", (req, res) => {
+  res.render("users",{
+    title: "Noisecar"
+  });
+});
+
+app.post("/users", async (req, res) => {
+  try {
+    const { username, password, email, name } = req.body;
+    // 加密密碼
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    // 將新用戶資料插入資料庫 (這裡假設你的 users 資料表已存在)
+    const sql = "INSERT INTO users (username, password, email, name) VALUES (?, ?, ?, ?)";
+    const [result] = await pool.promise().query(sql, [username, hashedPassword, email, name]);
+    res.render("users", { 
+      message: "新增成功！", 
+      userId: result.username, 
+      username, 
+      status: "success" 
+    });
+  } catch (err) {
+    console.error("新增用戶失敗：", err);
+    // 如果錯誤代碼為 ER_DUP_ENTRY，就顯示帳號重複訊息
+    if (err.code === 'ER_DUP_ENTRY') {
+      res.render("users", { 
+        message: "該帳號已被註冊，請更換帳號", 
+        status: "error" 
+      });
+    } else {
+      res.render("users", { 
+        message: "新增用戶失敗，請檢查伺服器日誌", 
+        status: "error" 
+      });
+    }
+  }
+});
+
+
+
+
+
+
+
 
 // 匯入車籍資料頁面，渲染 upload_registry.hbs
 app.get("/upload-registry", (req, res) => {
-  res.render("upload_registry");
+  res.render("upload_registry",{
+    title: "Noisecar"
+  });
 });
 
 
 
-//在路由中傳入 type（例如 type 為 "bike" 或 "car"）時，模板就會根據條件顯示對應的字串。
-app.engine("hbs", engine({
-  extname: ".hbs",
-  defaultLayout: "main",
-  helpers: {
-    ifCond: function (v1, operator, v2, options) {
-      switch (operator) {
-        case "==":
-          return (v1 == v2) ? options.fn(this) : options.inverse(this);
-        // 如有其他比較需求，可再新增 case
-        default:
-          return options.inverse(this);
-      }
-    }
-  }
-}));
-app.set("view engine", "hbs");
-app.set("views", "./views");
-
 
 // 新增 /view-reg 路由，顯示 bike_registry 或 car_registry 資料表所有欄位與所有資料
-app.get("/view-reg", async (req, res) => {
+app.get("/view-reg", ensureAuthenticated , async (req, res) => {
   // 1. 從查詢參數中取得 type，若未提供則預設為 "bike"
   const type = req.query.type || "bike";
   
@@ -118,7 +283,7 @@ app.get("/view-reg", async (req, res) => {
     
     // 9. 將 type、displayColumns、原始欄位 key 與資料內容 rows 傳入 view_reg.hbs 模板進行渲染
     // 傳入 keys (原始欄位名稱陣列) 與 columns (顯示用欄位名稱陣列)
-    res.render("view_reg", { type, keys: dbColumns, columns: displayColumns, records: rows });
+    res.render("view_reg", { title: "Noisecar", type, keys: dbColumns, columns: displayColumns, records: rows });
   } catch (error) {
     console.error("查詢資料失敗：", error);
     res.status(500).send("查詢資料失敗，請檢查伺服器日誌！");
@@ -223,7 +388,9 @@ app.post("/upload-registry/:type", upload_reg.single("registryFile"), async (req
 
 // 新增案件頁面路由
 app.get("/add-case", (req, res) => {
-  res.render("add_case");
+  res.render("add_case",{
+    title: "Noisecar"
+  });
 });
 // 處理新增案件的提交請求
 app.post("/add-case", async (req, res) => {
@@ -286,7 +453,9 @@ app.post("/add-case", async (req, res) => {
 
 // 上傳檔案(來文)頁面
 app.get("/upload-files", (req, res) => {
-  res.render("upload_files");
+  res.render("upload_files",{
+    title: "Noisecar"
+  });
 });
 
 // 配置 Multer，處理上傳的檔案
@@ -371,7 +540,9 @@ app.post("/upload-file", upload_issue.array("files", 10), async (req, res) => {
 
 // 發文通知頁面
 app.get("/post-case",(req, res) => {
-  res.render("post_case");
+  res.render("post_case",{
+    title: "Noisecar"
+  });
 });
 
 const uploadPostFile = multer({

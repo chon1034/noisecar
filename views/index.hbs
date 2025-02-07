@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8"> <!-- 設定字符編碼為 UTF-8 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 設定頁面適配裝置寬度 -->
-  <title>首頁</title> <!-- 頁面標題 -->
+  <!-- 動態設定 title -->
+  <title>{{title}}</title> 
   <!-- 引入 Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
@@ -56,6 +57,7 @@
     <a href="/post-case" class="btn btn-primary btn-custom">發文通知</a> <!-- 查詢案件按鈕 -->   
     <a href="/query-case" class="btn btn-primary btn-custom">查詢案件</a> <!-- 查詢案件按鈕 -->
     <a href="/view-reg" class="btn btn-primary btn-custom">查看車籍</a> <!-- 查看車籍按鈕 -->   
+    <a href="/users" class="btn btn-primary btn-custom">新增帳號</a> <!-- 新增user按鈕 -->   
     
   </div>
   <!-- 引入 Bootstrap JS 和 Popper.js -->

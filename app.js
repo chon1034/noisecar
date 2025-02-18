@@ -158,7 +158,8 @@ function ensureAuthenticated(req, res, next) {
 //只有已登入的使用者才能看到 index.hbs。如果未認證，使用者會被導向 /login。
 app.get("/", ensureAuthenticated, (req, res) => {
   res.render("index", { user: req.user,
-    title: "Noisecar"
+    title: "Noisecar",
+    username: req.user.username  // 將從資料庫查詢到的 username 傳給模板
   });
 });
 
@@ -225,21 +226,12 @@ app.post("/users", async (req, res) => {
 });
 
 
-
-
-
-
-
-
 // 匯入車籍資料頁面，渲染 upload_registry.hbs
 app.get("/upload-registry", (req, res) => {
   res.render("upload_registry",{
     title: "Noisecar"
   });
 });
-
-
-
 
 // 新增 /view-reg 路由，顯示 bike_registry 或 car_registry 資料表所有欄位與所有資料
 app.get("/view-reg", ensureAuthenticated , async (req, res) => {
@@ -629,6 +621,13 @@ app.post("/post-case", uploadPostFile.single("postFile"), async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "提交失敗！" });
   }
+});
+
+
+app.get("/query-case", (req, res) => {
+  res.render("query_case",{
+    title: "Noisecar"
+  });
 });
 
 

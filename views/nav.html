@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <!-- 設定 viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>環境部案件管理系統 - 首頁</title>
+  <!-- 載入 Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <style>
+    /* 可根據需求自訂樣式 */
+  </style>
+</head>
+<body>
+  <!-- Navbar 區塊 -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <!-- 品牌連結 -->
+      <a class="navbar-brand" href="#">環境部 Ministry of Environment</a>
+      <!-- 小螢幕切換按鈕 -->
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <!-- Collapsible 內容 -->
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <!-- 左側導航選單 -->
+        <ul class="navbar-nav me-auto">
+          <!-- 掛號登錄作業 Dropdown -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="uploadRegistryDropdown" role="button" 
+               data-bs-toggle="dropdown" aria-expanded="false">
+              掛號登錄作業
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="uploadRegistryDropdown">
+              <li><a class="dropdown-item" href="/upload-registry">匯入車籍資料</a></li>
+              <li><a class="dropdown-item" href="#">子項目 A</a></li>
+              <li><a class="dropdown-item" href="#">子項目 B</a></li>
+              <li><a class="dropdown-item" href="#">子項目 C</a></li>
+            </ul>
+          </li>
+          <!-- 檢驗作業 Dropdown -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="queryCaseDropdown" role="button" 
+               data-bs-toggle="dropdown" aria-expanded="false">
+              檢驗作業
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="queryCaseDropdown">
+              <li><a class="dropdown-item" href="/query-case">查詢案件</a></li>
+              <li><a class="dropdown-item" href="#">子項目 D</a></li>
+              <li><a class="dropdown-item" href="#">子項目 E</a></li>
+            </ul>
+          </li>
+          <!-- 合格排氣查詢 Dropdown -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="approvedEmissionsDropdown" role="button" 
+               data-bs-toggle="dropdown" aria-expanded="false">
+              合格排氣查詢
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="approvedEmissionsDropdown">
+              <li><a class="dropdown-item" href="/approved-emissions">查詢合格排氣</a></li>
+              <li><a class="dropdown-item" href="#">子項目 F</a></li>
+            </ul>
+          </li>
+          <!-- 系統管理 Dropdown -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="systemManagementDropdown" role="button" 
+               data-bs-toggle="dropdown" aria-expanded="false">
+              系統管理
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="systemManagementDropdown">
+              <li><a class="dropdown-item" href="/users">新增帳號</a></li>
+              <li><a class="dropdown-item" href="#">子項目 G</a></li>
+              <li><a class="dropdown-item" href="#">子項目 H</a></li>
+            </ul>
+          </li>
+        </ul>
+        <!-- 右側用戶下拉選單 -->
+        <ul class="navbar-nav">
+          <li class="nav-item dropdown">
+            <!-- 用戶名稱從伺服器傳入 ({{user}}) -->
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              {{username}}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+              <li><a class="dropdown-item" href="/profile">個人資料</a></li>
+              <li><a class="dropdown-item" href="/settings">設定</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="/logout">登出</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主內容區：內容由子模板插入 -->
+  <div class="container mt-4">
+    {{{body}}}
+  </div>
+
+  <!-- 載入 Bootstrap 5 JavaScript Bundle（包含 Popper.js） -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- 自訂 JavaScript：利用 Bootstrap Dropdown 事件控制 nav-link 的 show 類別 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 針對每個 dropdown 項目，監聽 show 與 hide 事件
+      var dropdownItems = document.querySelectorAll('.nav-item.dropdown');
+      dropdownItems.forEach(function(item) {
+        item.addEventListener('show.bs.dropdown', function () {
+          var toggle = item.querySelector('.dropdown-toggle');
+          if (toggle) {
+            toggle.classList.add('show');
+          }
+        });
+        item.addEventListener('hide.bs.dropdown', function () {
+          var toggle = item.querySelector('.dropdown-toggle');
+          if (toggle) {
+            toggle.classList.remove('show');
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

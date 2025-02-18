@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8"> <!-- 設定字符編碼 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 響應式設計 -->
+  <title>{{title}}</title> <!-- 動態設定頁面標題 -->
+  <!-- 載入 Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* 表格區塊的樣式 */
+    .table-responsive {
+      margin-top: 20px;
+    }
+    /* 搜尋框樣式 */
+    #searchInput {
+      max-width: 300px;
+      margin-bottom: 15px;
+    }
+    /* 使表格 header 與資料列垂直置中 */
+    th, td {
+      vertical-align: middle !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-4">
+    <!-- 搜尋框：用於快速查找車號 -->
+    <div class="mb-3">
+      <input type="text" id="searchInput" class="form-control" placeholder="搜尋車號">
+    </div>
+    <!-- 表格容器 -->
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead>
+          <!-- 第一行標題：主要分類 -->
+          <tr>
+            <th rowspan="2">案件編號</th>
+            <th rowspan="2">車主</th>
+            <th rowspan="2">車號</th>
+            <th rowspan="2">電話</th>
+            <th rowspan="2">案件月分</th>
+            <th rowspan="2">案由</th>
+            <th rowspan="2">案件來源</th>
+            <th colspan="9">通知檢驗</th>
+            <th rowspan="2">備註</th>
+            <th rowspan="2">狀態</th>
+            <th rowspan="2">狀態統計</th>
+            <th rowspan="2">辦理狀況</th>
+          </tr>
+          <!-- 第二行標題：通知檢驗下的子項目 -->
+          <tr>
+            <th>來文者</th>
+            <th>日期</th>
+            <th>發文文號</th>
+            <th>日期</th>
+            <th>發文文號</th>
+            <th>回執聯投遞日期</th>
+            <th>回執聯回局日期</th>
+            <th>檢驗日期</th>
+            <th>檢驗結果</th>
+          </tr>
+        </thead>
+        <tbody id="casesTableBody">
+          {{!-- 迭代 records 陣列，顯示每一筆案件資料 --}}
+          {{#each records}}
+          <tr>
+            <td>{{this.caseId}}</td>
+            <td>{{this.owner}}</td>
+            <td>{{this.vehicleNumber}}</td>
+            <td>{{this.phone}}</td>
+            <td>{{this.caseMonth}}</td>
+            <td>{{this.caseReason}}</td>
+            <td>{{this.caseSource}}</td>
+            <td>{{this.noticeSender}}</td>
+            <td>{{this.noticeDate1}}</td>
+            <td>{{this.noticeDocNo1}}</td>
+            <td>{{this.noticeDate2}}</td>
+            <td>{{this.noticeDocNo2}}</td>
+            <td>{{this.noticeSentDate}}</td>
+            <td>{{this.noticeReceivedDate}}</td>
+            <td>{{this.testDate}}</td>
+            <td>{{this.testResult}}</td>
+            <td>{{this.remark}}</td>
+            <td>{{this.status}}</td>
+            <td>{{this.statusStats}}</td>
+            <td>{{this.processStatus}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- 載入 Bootstrap 5 JavaScript Bundle（包含 Popper.js） -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- 自訂 JavaScript：搜尋功能 -->
+  <script>
+    // 當使用者在搜尋框輸入時，過濾表格中車號欄位（假設車號在第三個欄位）
+    document.getElementById("searchInput").addEventListener("input", function() {
+      var query = this.value.toLowerCase();
+      var rows = document.querySelectorAll("#casesTableBody tr");
+      rows.forEach(function(row) {
+        // 取得第三個 cell（車號）的內容（索引 2）
+        var vehicleCell = row.cells[2];
+        if (vehicleCell) {
+          var vehicleText = vehicleCell.textContent.toLowerCase();
+          // 若包含搜尋字串，則顯示該列；否則隱藏
+          row.style.display = vehicleText.indexOf(query) !== -1 ? "" : "none";
+        }
+      });
+    });
+  </script>
+</body>
+</html>

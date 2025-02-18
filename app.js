@@ -16,6 +16,8 @@ const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
 const flash = require("connect-flash");
 const saltRounds = 10;
+const XLSX = require("xlsx"); // 新增 xlsx 套件
+const fsSync = require("fs");
 
 
 // 設置模板引擎，並註冊 ifCond 與 getCellClass 兩個 helper
@@ -620,6 +622,139 @@ app.post("/post-case", uploadPostFile.single("postFile"), async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "提交失敗！" });
+  }
+});
+
+// 使用 multer 設定記憶體儲存，處理上傳 Excel 檔案
+const splitUpload = multer({ storage: multer.memoryStorage() });
+/**
+ * POST /split
+ * 功能：
+ * 1. 驗證上傳檔案的第一列標題是否符合預期：
+ *    "項次,受文者名稱,對應機關名稱,郵遞區號,地址,車號,檢驗期限日期,來文日期,來文文號"
+ * 2. 第一需求：從「受文者名稱,對應機關名稱,郵遞區號,地址」擴充成新欄位：
+ *    "本別,受文者名稱,對應機關名稱,含附件,發文方式,郵遞區號,地址,群組名稱"
+ *    固定值設定：本別皆填 "正本"，發文方式皆填 "郵寄"，含附件與群組名稱保留空白
+ *    輸出 CSV 檔案（UTF8 編碼）
+ * 3. 第二需求：從「受文者名稱,車號,檢驗期限日期,來文日期,來文文號」
+ *    將「受文者名稱」改為「受文者」後，依序輸出為：受文者,車號,檢驗期限日期,來文文號
+ *    使用 tab 作為分隔符號，輸出 TXT 檔案
+ * 4. 最後將產生的檔案存入 public/downloads 並回傳下載路徑
+ */
+
+app.get("/split",(req, res) => {
+  res.render("split",{
+    title: "Noisecar"
+  });
+});
+
+app.post("/split", splitUpload.single("excelFile"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "請上傳 Excel 檔案" });
+    }
+
+    // 讀取上傳的 Excel 檔案 (使用 Buffer)
+    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    // 以二維陣列取得資料，第一列為 header
+    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    if (!rows || rows.length < 2) {
+      return res.status(400).json({ error: "檔案內容不足，無法處理。" });
+    }
+
+    // 檢查標題是否符合預期
+    const expectedHeader = ["項次", "受文者名稱", "對應機關名稱", "郵遞區號", "地址", "車號", "檢驗期限日期", "來文日期", "來文文號"];
+    const header = rows[0];
+    if (header.join() !== expectedHeader.join()) {
+      return res.status(400).json({ error: "檔案標題不符預期格式。" });
+    }
+
+    // ──────────────────────────────
+    // 第一需求：產生 CSV 檔案
+    // 新欄位：本別,受文者名稱,對應機關名稱,含附件,發文方式,郵遞區號,地址,群組名稱
+    // 固定填入："正本"、""、""、"郵寄"、"" 分別對應本別、含附件、群組名稱
+    // ──────────────────────────────
+    const csvHeader = ["本別", "受文者名稱", "對應機關名稱", "含附件", "發文方式", "郵遞區號", "地址", "群組名稱"];
+    const csvRows = [];
+    csvRows.push(csvHeader.join(','));
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const newRow = [
+        "正本",            // 本別
+        row[1] || '',      // 受文者名稱
+        row[2] || '',      // 對應機關名稱
+        '',                // 含附件
+        "郵寄",            // 發文方式
+        row[3] || '',      // 郵遞區號
+        row[4] || '',      // 地址
+        ''                 // 群組名稱
+      ];
+      // 若欄位中含有逗號，則加上雙引號
+      const formattedRow = newRow.map(field => {
+        if (typeof field === "string" && field.includes(",")) {
+          return `"${field}"`;
+        }
+        return field;
+      });
+      csvRows.push(formattedRow.join(','));
+    }
+    const csvOutput = csvRows.join("\n");
+
+    // ──────────────────────────────
+    // 第二需求：產生 TXT 檔案
+    // 欄位：受文者 (原受文者名稱), 車號, 檢驗期限日期, 來文文號 (移除來文日期)
+    // 使用 tab (\t) 分隔
+    // ──────────────────────────────
+    const txtHeader = ["受文者", "車號", "檢驗期限日期", "來文文號"];
+    const txtRows = [];
+    txtRows.push(txtHeader.join('\t'));
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const newRow = [
+        row[1] || '',  // 受文者 (原受文者名稱)
+        row[5] || '',  // 車號
+        row[6] || '',  // 檢驗期限日期
+        row[8] || ''   // 來文文號 (跳過來文日期)
+      ];
+      txtRows.push(newRow.join('\t'));
+    }
+    const txtOutput = txtRows.join("\n");
+
+    // ──────────────────────────────
+    // 將產生的檔案存放到 public/downloads 目錄，並回傳下載路徑
+    // ──────────────────────────────
+    const downloadsDir = path.join(__dirname, "public", "downloads");
+    if (!fsSync.existsSync(downloadsDir)) {
+      await fs.mkdir(downloadsDir, { recursive: true });
+    }
+     // 使用上傳檔案的原始檔名（去除原副檔名）作為輸出檔案名稱
+    const originalName = Buffer.from(req.file.originalname, "latin1").toString("utf8");
+    //const originalName = req.file.originalname;
+    const baseName = path.parse(originalName).name;
+    const csvFileName = `${baseName}.csv`;
+    const txtFileName = `${baseName}.txt`;
+    const csvFilePath = path.join(downloadsDir, csvFileName);
+    const txtFilePath = path.join(downloadsDir, txtFileName);
+
+    // 加上 BOM，確保 CSV 為 UTF-8 並包含 BOM
+    const BOM = "\uFEFF";
+    const csvOutputWithBOM = BOM + csvOutput;
+    const txtOutputWithBOM = BOM + txtOutput;
+    await fs.writeFile(csvFilePath, csvOutputWithBOM, { encoding: "utf8" });
+    await fs.writeFile(txtFilePath, txtOutputWithBOM, { encoding: "utf8" });
+
+    res.json({
+      csvPath: `/downloads/${csvFileName}`,
+      txtPath: `/downloads/${txtFileName}`
+    });
+  } catch (error) {
+    console.error("檔案處理錯誤:", error);
+    res.status(500).json({ error: "伺服器處理錯誤" });
   }
 });
 

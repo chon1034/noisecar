@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel 分割處理</title>
+  <!-- 載入 Bootstrap5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="mb-4">上傳 Excel 並轉換檔案</h1>
+    <!-- 上傳表單 -->
+    <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label for="excelFile" class="form-label">請選擇 Excel 檔案</label>
+        <input type="file" class="form-control" id="excelFile" name="excelFile" accept=".xlsx, .xls" required>
+      </div>
+      <button type="submit" class="btn btn-primary">上傳並處理</button>
+    </form>
+    
+    <!-- 處理完成後顯示下載連結 -->
+    <div id="downloadButtons" class="mt-4" style="display:none;">
+      <h3>下載轉換後檔案</h3>
+      <a id="csvDownload" class="btn btn-success me-2" href="#" >下載 CSV 檔案</a>
+      <a id="txtDownload" class="btn btn-success" href="#" >下載 TXT 檔案</a>
+    </div>
+  </div>
+
+  <!-- 載入 Bootstrap5 JavaScript (選用) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // 監聽表單提交事件，使用 AJAX 上傳檔案
+    document.getElementById('uploadForm').addEventListener('submit', async function(event){
+      event.preventDefault();
+      const formData = new FormData(this);
+      try {
+        const response = await fetch('/split', { 
+          method: 'POST', 
+          body: formData 
+        });
+        if(response.ok){
+          const data = await response.json();
+          // 後端回傳結果包含轉換後檔案的路徑 (csvPath 與 txtPath)
+          document.getElementById('csvDownload').href = data.csvPath;
+          document.getElementById('txtDownload').href = data.txtPath;
+          document.getElementById('downloadButtons').style.display = 'block';
+          document.getElementById('csvDownload').download = data.csvPath.split('/').pop();
+          document.getElementById('txtDownload').download = data.txtPath.split('/').pop();
+        } else {
+          alert('檔案處理失敗，請檢查檔案格式或稍後再試。');
+        }
+      } catch (error) {
+        console.error('上傳錯誤:', error);
+        alert('上傳時發生錯誤。');
+      }
+    });
+  </script>
+</body>
+</html>

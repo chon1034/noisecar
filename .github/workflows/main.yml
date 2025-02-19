@@ -47,6 +47,9 @@ jobs:
             sudo chown -R $USER:$USER /home/celous175/var/www/noisecar
             sudo chmod -R 775 /home/celous175/var/www/noisecar
 
+            # 新增這一行，設定正確的 PATH
+            export PATH=/home/celous175/.nvm/versions/node/v22.13.1/bin:$PATH
+
             echo " 安裝 npm 依賴..."
             /home/celous175/.nvm/versions/node/v22.13.1/bin/npm install --omit=dev --unsafe-perm
 

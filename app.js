@@ -709,7 +709,7 @@ app.post("/split", splitUpload.single("excelFile"), async (req, res) => {
     // 欄位：受文者 (原受文者名稱), 車號, 檢驗期限日期, 來文文號 (移除來文日期)
     // 使用 tab (\t) 分隔
     // ──────────────────────────────
-    const txtHeader = ["受文者", "車號", "檢驗期限日期", "來文文號"];
+    const txtHeader = ["受文者", "車號", "檢驗期限日期", "來文日期", "來文文號"];
     const txtRows = [];
     txtRows.push(txtHeader.join('\t'));
 

@@ -737,8 +737,8 @@ app.post("/split", splitUpload.single("excelFile"), async (req, res) => {
     const originalName = Buffer.from(req.file.originalname, "latin1").toString("utf8");
     //const originalName = req.file.originalname;
     const baseName = path.parse(originalName).name;
-    const csvFileName = `${baseName}.csv`;
-    const txtFileName = `${baseName}.txt`;
+    const csvFileName = `${baseName}_匯入受文者群組.csv`;
+    const txtFileName = `${baseName}_內文分繕設定.txt`;
     const csvFilePath = path.join(downloadsDir, csvFileName);
     const txtFilePath = path.join(downloadsDir, txtFileName);
 

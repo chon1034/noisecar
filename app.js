@@ -719,7 +719,8 @@ app.post("/split", splitUpload.single("excelFile"), async (req, res) => {
         row[1] || '',  // 受文者 (原受文者名稱)
         row[5] || '',  // 車號
         row[6] || '',  // 檢驗期限日期
-        row[8] || ''   // 來文文號 (跳過來文日期)
+        row[7] || '',  // 來文日期
+        row[8] || ''   // 來文文號
       ];
       txtRows.push(newRow.join('\t'));
     }

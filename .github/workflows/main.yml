@@ -48,7 +48,8 @@ jobs:
             sudo chmod -R 775 /home/celous175/var/www/noisecar
 
             echo " 安裝 npm 依賴..."
-            npm install --omit=dev --unsafe-perm
+            /home/celous175/.nvm/versions/node/v22.13.1/bin/npm install --omit=dev --unsafe-perm
+
 
             echo " 重新啟動應用程式..."
             sudo systemctl daemon-reload

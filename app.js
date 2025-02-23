@@ -631,13 +631,12 @@ const splitUpload = multer({ storage: multer.memoryStorage() });
  * POST /split
  * 功能：
  * 1. 驗證上傳檔案的第一列標題是否符合預期：
- *    "項次,受文者名稱,對應機關名稱,郵遞區號,地址,車號,檢驗期限日期,來文日期,來文文號"
+ *    "項次,受文者名稱,對應機關名稱,郵遞區號,地址"
  * 2. 第一需求：從「受文者名稱,對應機關名稱,郵遞區號,地址」擴充成新欄位：
  *    "本別,受文者名稱,對應機關名稱,含附件,發文方式,郵遞區號,地址,群組名稱"
  *    固定值設定：本別皆填 "正本"，發文方式皆填 "郵寄"，含附件與群組名稱保留空白
  *    輸出 CSV 檔案（UTF8 編碼）
- * 3. 第二需求：從「受文者名稱,車號,檢驗期限日期,來文日期,來文文號」
- *    將「受文者名稱」改為「受文者」後，依序輸出為：受文者,車號,檢驗期限日期,來文文號
+ * 3. 第二需求：將「受文者名稱」改為「受文者」後，從第6欄位依序輸出
  *    使用 tab 作為分隔符號，輸出 TXT 檔案
  * 4. 最後將產生的檔案存入 public/downloads 並回傳下載路徑
  */
@@ -666,14 +665,18 @@ app.post("/split", splitUpload.single("excelFile"), async (req, res) => {
     }
 
     // 檢查標題是否符合預期
-    const expectedHeader = ["項次", "受文者名稱", "對應機關名稱", "郵遞區號", "地址", "車號", "檢驗期限日期", "來文日期", "來文文號"];
+    // CSV 部分只檢查前 5 欄
+    const expectedCsvHeader = ["項次", "受文者名稱", "對應機關名稱", "郵遞區號", "地址"];
     const header = rows[0];
-    if (header.join() !== expectedHeader.join()) {
-      return res.status(400).json({ error: "檔案標題不符預期格式。" });
+    for (let i = 0; i < expectedCsvHeader.length; i++) {
+      if (header[i] !== expectedCsvHeader[i]) {
+        return res.status(400).json({ error: "檔案標題不符預期格式，前五欄必須為：" + expectedCsvHeader.join(", ") });
+      }
     }
+    // 後面的欄位（從第6欄開始）將作為 txt 的標題來源
 
     // ──────────────────────────────
-    // 第一需求：產生 CSV 檔案
+    // 產生 CSV 檔案
     // 新欄位：本別,受文者名稱,對應機關名稱,含附件,發文方式,郵遞區號,地址,群組名稱
     // 固定填入："正本"、""、""、"郵寄"、"" 分別對應本別、含附件、群組名稱
     // ──────────────────────────────
@@ -705,23 +708,31 @@ app.post("/split", splitUpload.single("excelFile"), async (req, res) => {
     const csvOutput = csvRows.join("\n");
 
     // ──────────────────────────────
-    // 第二需求：產生 TXT 檔案
-    // 欄位：受文者 (原受文者名稱), 車號, 檢驗期限日期, 來文文號 (移除來文日期)
+    // 產生 TXT 檔案
+    // TXT 的標題：
+    //  第一欄固定為 "受文者"
+    //  之後的標題依上傳檔案從第6欄開始的標題產生
     // 使用 tab (\t) 分隔
     // ──────────────────────────────
-    const txtHeader = ["受文者", "車號", "檢驗期限日期", "來文日期", "來文文號"];
+    const txtHeader = [];
+    txtHeader.push("受文者"); // 第一欄固定
+    // 從上傳 header 的第6欄開始
+    for (let i = 5; i < header.length; i++) {
+      txtHeader.push(header[i] || '');
+    }
     const txtRows = [];
     txtRows.push(txtHeader.join('\t'));
 
+    // 產生每一筆資料
+    // 第一欄依然使用上傳的「受文者名稱」（即 row[1]），之後的欄位從第6欄開始對應輸出
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
-      const newRow = [
-        row[1] || '',  // 受文者 (原受文者名稱)
-        row[5] || '',  // 車號
-        row[6] || '',  // 檢驗期限日期
-        row[7] || '',  // 來文日期
-        row[8] || ''   // 來文文號
-      ];
+      const newRow = [];
+      newRow.push(row[1] || ''); // 第一欄：受文者名稱
+      // 從第6欄開始的每一個欄位
+      for (let j = 5; j < header.length; j++) {
+        newRow.push(row[j] || '');
+      }
       txtRows.push(newRow.join('\t'));
     }
     const txtOutput = txtRows.join("\n");
@@ -733,16 +744,15 @@ app.post("/split", splitUpload.single("excelFile"), async (req, res) => {
     if (!fsSync.existsSync(downloadsDir)) {
       await fs.mkdir(downloadsDir, { recursive: true });
     }
-     // 使用上傳檔案的原始檔名（去除原副檔名）作為輸出檔案名稱
+    // 使用上傳檔案的原始檔名（去除原副檔名）作為輸出檔案名稱
     const originalName = Buffer.from(req.file.originalname, "latin1").toString("utf8");
-    //const originalName = req.file.originalname;
     const baseName = path.parse(originalName).name;
     const csvFileName = `${baseName}_匯入受文者群組.csv`;
     const txtFileName = `${baseName}_內文分繕設定.txt`;
     const csvFilePath = path.join(downloadsDir, csvFileName);
     const txtFilePath = path.join(downloadsDir, txtFileName);
 
-    // 加上 BOM，確保 CSV 為 UTF-8 並包含 BOM
+    // 加上 BOM，確保 CSV 與 TXT 為 UTF-8 並包含 BOM
     const BOM = "\uFEFF";
     const csvOutputWithBOM = BOM + csvOutput;
     const txtOutputWithBOM = BOM + txtOutput;
@@ -758,6 +768,7 @@ app.post("/split", splitUpload.single("excelFile"), async (req, res) => {
     res.status(500).json({ error: "伺服器處理錯誤" });
   }
 });
+
 
 
 app.get("/query-case", (req, res) => {

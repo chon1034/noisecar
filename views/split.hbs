@@ -3,56 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Excel 分割處理</title>
-  <!-- 載入 Bootstrap5 CSS -->
+  <title>{{title}}</title> 
+  <!-- 引入 Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .container {
+      max-width: 800px; /* 寬度為 600px */
+      background-color: white; /* 背景顏色為白色 */
+      padding: 20px; /* 內邊距 */
+      /*border-radius: 8px; /* 圓角 */
+      /*box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 陰影效果 */
+      position: relative; /* 設置容器為相對定位，用於放置回首頁按鈕 */
+    }
+    .home-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+  </style>
 </head>
-<body>
-  <div class="container mt-5">
-    <h1 class="mb-4">上傳 Excel 並轉換檔案</h1>
+<body class="bg-light d-flex justify-content-center align-items-center min-vh-100">
+  <div class="container">
+    <!-- 回首頁按鈕 -->
+    <div class="d-flex justify-content-end mb-3">
+      <a href="/" class="btn btn-primary home-button">回首頁</a>
+    </div>
+    
+    <!-- 頁面標題 -->
+    <h1 class="text-center mb-4">內文分繕清單</h1>
+
+    <!-- 注意事項區塊 -->
+    <div class="mt-4">
+      <p class="text-danger fw-bold">●  本頁面提供功能為輸出csv檔(匯入受文者群組)、txt檔(匯入內文分繕檔案)</p>
+      <p class="text-danger fw-bold">1. 清單檔案標題應前五欄應為 [項次, 受文者名稱, 對應機關名稱, 郵遞區號, 地址]</p>
+      <p class="text-danger fw-bold">2. csv 檔輸出欄位為 [本別, 受文者名稱, 對應機關名稱, 含附件, 發文方式, 郵遞區號, 地址, 群組名稱]</p>
+      <p class="text-danger fw-bold">3. txt 檔輸出欄位為 [受文者, 之後從上傳檔案的第6欄標題依序建立]</p>
+    </div>
+    
     <!-- 上傳表單 -->
     <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
       <div class="mb-3">
-        <label for="excelFile" class="form-label">請選擇 Excel 檔案</label>
+        <label class="form-label">請選擇 Excel 檔案</label>
         <input type="file" class="form-control" id="excelFile" name="excelFile" accept=".xlsx, .xls" required>
       </div>
-      <button type="submit" class="btn btn-primary">上傳並處理</button>
+      <button type="submit" class="btn btn-primary w-100">上傳並處理</button>
     </form>
-    
+
+    <!-- 顯示伺服器回傳訊息 -->
+    <div id="resultMessage" class="mt-3"></div>
+      
     <!-- 處理完成後顯示下載連結 -->
     <div id="downloadButtons" class="mt-4" style="display:none;">
-      <h3>下載轉換後檔案</h3>
-      <a id="csvDownload" class="btn btn-success me-2" href="#" >下載 CSV 檔案</a>
-      <a id="txtDownload" class="btn btn-success" href="#" >下載 TXT 檔案</a>
+      <h3 class="text-center">下載檔案</h3>
+      <div class="d-flex justify-content-center gap-2">
+        <a id="csvDownload" class="btn btn-success" href="#">下載 CSV 檔案</a>
+        <a id="txtDownload" class="btn btn-success" href="#">下載 TXT 檔案</a>
+      </div>
     </div>
+    
+
   </div>
 
-  <!-- 載入 Bootstrap5 JavaScript (選用) -->
+  <!-- 載入 Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // 監聽表單提交事件，使用 AJAX 上傳檔案
+    // 使用 fetch API 處理表單送出，並在同一頁面上顯示伺服器回傳訊息
     document.getElementById('uploadForm').addEventListener('submit', async function(event){
       event.preventDefault();
       const formData = new FormData(this);
+      // 清空先前訊息
+      document.getElementById('resultMessage').innerHTML = "";
       try {
         const response = await fetch('/split', { 
           method: 'POST', 
           body: formData 
         });
+        const data = await response.json();
         if(response.ok){
-          const data = await response.json();
-          // 後端回傳結果包含轉換後檔案的路徑 (csvPath 與 txtPath)
           document.getElementById('csvDownload').href = data.csvPath;
           document.getElementById('txtDownload').href = data.txtPath;
-          document.getElementById('downloadButtons').style.display = 'block';
           document.getElementById('csvDownload').download = data.csvPath.split('/').pop();
           document.getElementById('txtDownload').download = data.txtPath.split('/').pop();
+          document.getElementById('downloadButtons').style.display = 'block';
+          document.getElementById('resultMessage').innerHTML =
+            `<div class="alert alert-success" role="alert">檔案處理成功！</div>`;
         } else {
-          alert('檔案處理失敗，請檢查檔案格式或稍後再試。');
+          document.getElementById('resultMessage').innerHTML =
+            `<div class="alert alert-danger" role="alert">${data.message || '檔案處理失敗，請檢查檔案格式或稍後再試。'}</div>`;
         }
       } catch (error) {
         console.error('上傳錯誤:', error);
-        alert('上傳時發生錯誤。');
+        document.getElementById('resultMessage').innerHTML =
+            `<div class="alert alert-danger" role="alert">上傳時發生錯誤，請稍後再試。</div>`;
       }
     });
   </script>
